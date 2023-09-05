@@ -16,7 +16,7 @@ project_role_name: "docker_{{ project_name }}"
 
 # parent folder where the role should be created.
 # If used inside an ansible repo, should default ansible cfs role_path
-output_role_path: "{{ role_path | dirname }}/{{ project_role_name }}"
+out_roles_path: "{{ undef(hint='Provide the path to a docker-compose.yml file') }}"
 
 # prefix used for each environment config variable when transformed to an
 # role default, defaults to the project_name

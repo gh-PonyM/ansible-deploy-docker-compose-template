@@ -1,5 +1,5 @@
 ---
-
+output_role_path: "{{ out_roles_path }}/{{ project_role_name }}"
 python_script_path: "{{ role_path }}/scripts/dc_to_ansible.py"
 cli_output_file_path: "{{ output_role_path }}/{{ project_name }}.json"
 user: "{{ lookup('env', 'USER') }}"
