@@ -1,0 +1,14 @@
+---
+
+- name: ensure compose setup is stopped
+  community.docker.docker_compose:
+    project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
+    project_src: "{{ repository_src }}"
+    debug: true
+    state: absent
+  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+
+- name: Ensure repository path is absent
+  file:
+    path: "{{ repository_src }}"
+    state: absent

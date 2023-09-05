@@ -1,0 +1,68 @@
+---
+
+- name: ensure deployment user for \VAR{ cli_output['role_name'] }
+  user:
+    name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    state: "{{ \VAR{ cli_output['defaults_prefix'] }state | default('present') }}"
+    create_home: true
+
+- name: Ensure user is added to the docker group.
+  user:
+    name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    groups: docker
+    append: true
+
+- name: Ensure repository paths are present
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  loop:
+   - "{{ repository_src }}"
+   - "{{ repository_src }}/scripts"
+
+- name: \VAR{ cli_output['role_name'] } | copy docker-compose template
+  template:
+    src: "docker-compose.yml"
+    dest: "{{ repository_src }}/docker-compose.yml"
+    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    mode: "600"
+  register: repo_copy
+
+- name: ensure external network exists
+  community.docker.docker_network:
+    name: "{{ \VAR{ cli_output['defaults_prefix'] }ext_net }}"
+    driver: bridge
+    attachable: true
+    state: present
+
+#- import_role:
+#    name: docker_scripts
+#    tasks_from: copy.yml
+#  when: proxy_mgr_db_backend == "mariadb"
+#  vars:
+#    mariadb_backup_path: /var/lib/mysql
+#    mariadb_backup_filename: backup_mariadb.sql
+#    scripts_copy: ['mariadb_backup.sh']
+
+#- name: Ensure data folder with correct permissions
+#  file:
+#    path: "{{ repository_src }}/data"
+#    state: directory
+#    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+#    group: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+#    recurse: true
+
+- name: ensure services \VAR{ cli_output['role_name'] } are running
+  community.docker.docker_compose:
+    project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
+    project_src: "{{ repository_src }}"
+    debug: true
+    state: "{{ \VAR{ cli_output['defaults_prefix'] }state }}"
+    build: false
+    files:
+\BLOCK{ for f in cli_output['compose_files'] }
+      - \VAR{ f | basename }
+\BLOCK{ endfor }
+  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  when: not \VAR{ cli_output['defaults_prefix'] }remove

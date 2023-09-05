@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "deploy-docker-compose-template"
+version = "0.0.1"
+description = ""
+authors = ["PonyM <dev@lksch.ch>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "deploy_docker_compose_template"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.1"
+click = "^8.1.7"
+pyyaml = "^6.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,23 @@
+---
+
+python_script_path: "{{ role_path }}/scripts/dc_to_ansible.py"
+cli_output_file_path: "{{ output_role_path }}/{{ project_name }}.json"
+user: "{{ lookup('env', 'USER') }}"
+
+cli_argv:
+  - python3
+  - "{{ python_script_path }}"
+  - -f
+  - "{{ compose_file_path }}"
+  - --role-name
+  - "{{ project_role_name }}"
+  - --min-secret-length
+  - "{{ min_secret_length }}"
+  - --out
+  - "{{ cli_output_file_path }}"
+  - --defaults-prefix
+  - "{{ project_name }}"
+  - --ext-proxy-net
+  - "{{ ext_proxy_net }}"
+  - "{{ '--proxy-container' if proxy_container_net_attach else '' }}"
+  - "{{ proxy_container_net_attach | default('',  true) }}"

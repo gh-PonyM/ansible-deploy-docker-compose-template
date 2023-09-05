@@ -1,0 +1,7 @@
+---
+
+- import_tasks: install.yml
+  when: not \VAR{ cli_output['defaults_prefix'] }remove
+
+- import_tasks: remove.yml
+  when: \VAR{ cli_output['defaults_prefix'] }remove

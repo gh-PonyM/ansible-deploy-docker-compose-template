@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: 'Europe/Berlin'
+      WEBPASSWORD: 'set a secure password here or it will be random'
+      PIHOLE_DNS: "9.9.9.9,9.9.9.10"
+      DNSSEC: "true"
+      DNS_BOGUS_PRIV: "true"
+      DNS_FQDN_REQUIRED: "true"
+      DHCP_ACTIVE: "false"
+      WEBTHEME: "default-dark"
+      PIHOLE_UID: 1000
+      PIHOLE_GID: 1000
+      CUSTOM_CACHE_SIZE: "10000"
+      IPv6: "true"
+      VIRTUAL_HOST: "localhost"
+
+    # Volumes store your data between container upgrades
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './etc-dnsmasq.d:/etc/dnsmasq.d'
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped

@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  vars:
+\BLOCK{ for def in cli_output['defaults'] }
+\BLOCK{ if def['is_secret'] }
+    \VAR{ def.key }: "\VAR{ def['secret_expr'] }"
+\BLOCK{ else }
+\BLOCK{ if val is mapping }
+    \VAR{ def.key }:
+\BLOCK{ for k, v in val.items() }
+      \VAR{ k }: "\VAR{ v }"
+\BLOCK{ endfor }
+\BLOCK{ else }
+    \VAR{ def.key }: \VAR{ def['value'] }
+\BLOCK{ endif }
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\BLOCK{ for val, key in cli_output.get('volume_defaults', {}).items() }
+    \VAR{ key }: "\VAR{ val }"
+\BLOCK{ endfor }
+\BLOCK{- if cli_output['backup_paths'] }
+    # backups
+    borgbackup_include:
+\BLOCK{ for path in cli_output['backup_paths'] }
+    - \VAR{ path }
+\BLOCK{ endfor }
+\BLOCK{ endif }
+    # ansible deploy defaults
+    \VAR{ cli_output['defaults_prefix'] }user: dockerusr
+    \VAR{ cli_output['defaults_prefix'] }ext_net: \VAR{ cli_output['external_proxy_net'] }
+    \VAR{ cli_output['defaults_prefix'] }project_name: \VAR{ cli_output['role_name'] }
+  roles:
+  - role: docker
+    tags: docker
+  - role: \VAR{ cli_output['role_name'] }
+    tags: \VAR{ cli_output['role_name'] }

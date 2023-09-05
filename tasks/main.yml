@@ -1,0 +1,92 @@
+---
+
+- name: Create directories
+  file:
+    path: "{{ output_role_path }}/{{ item }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+  loop:
+   - vars
+   - defaults
+   - tasks
+   - templates
+
+- name: call dc_to_ansible.py
+  command:
+    argv: "{{ cli_argv | select() }}"
+  delegate_to: 127.0.0.1
+  connection: local
+
+- slurp:
+    src: "{{ cli_output_file_path }}"
+  register: cli_o
+  delegate_to: 127.0.0.1
+  connection: local
+
+- name: Set the cli output as fact
+  set_fact:
+    cli_output: "{{ cli_o['content'] | b64decode | from_json }}"
+
+- name: Render example playbook
+  template:
+    src: "playbook.example.yml"
+    dest: "{{ output_role_path }}/playbook.example.yml"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    block_start_string: '\BLOCK{'
+    block_end_string: '}'
+    trim_blocks: true
+    variable_start_string: '\VAR{'
+    variable_end_string: '}'
+
+- name: Render default and vars files
+  template:
+    src: "{{ item }}.yml"
+    dest: "{{ output_role_path }}/{{ item }}/main.yml"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    block_start_string: '\BLOCK{'
+    block_end_string: '}'
+    trim_blocks: true
+    variable_start_string: '\VAR{'
+    variable_end_string: '}'
+  loop:
+    - vars
+    - defaults
+
+- name: Copy compose config content
+  copy:
+    content: "{{ cli_output['final_compose'] | to_nice_yaml(sort_keys=False, indent=2) }}"
+    dest: "{{ output_role_path }}/templates/docker-compose.yml"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+
+- name: Render task files
+  template:
+    src: "tasks/{{ item }}"
+    dest: "{{ output_role_path }}/tasks/{{ item }}"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    block_start_string: '\BLOCK{'
+    block_end_string: '}'
+    trim_blocks: true
+    variable_start_string: '\VAR{'
+    variable_end_string: '}'
+  loop:
+   - install.yml
+   - main.yml
+   - remove.yml
+
+- name: Render README.md
+  template:
+    src: README.md
+    dest: "{{ output_role_path }}/README.md"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+
+- name: Remove cli json output
+  file:
+    path: "{{ cli_output_file_path }}"
+    state: absent
+  when: remove_cli_artefact

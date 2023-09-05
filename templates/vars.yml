@@ -1,0 +1,3 @@
+---
+
+repository_src: "/home/{{ \VAR{ cli_output['defaults_prefix'] }user }}/{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
