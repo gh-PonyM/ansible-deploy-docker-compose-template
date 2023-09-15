@@ -1,5 +1,14 @@
 ---
 
+- name: Ensure python docker package
+  pip:
+    name:
+      - docker
+      - docker-compose
+    extra_args: --user
+    executable: pip3
+  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+
 - name: ensure deployment user for \VAR{ cli_output['role_name'] }
   user:
     name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
