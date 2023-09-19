@@ -41,7 +41,5 @@ def temporary_directory():
 
 @pytest.fixture()
 def runner(temporary_directory):
-    with cd_to_directory(
-        temporary_directory, env={}
-    ):
+    with cd_to_directory(temporary_directory, env={}):
         yield CliRunner()

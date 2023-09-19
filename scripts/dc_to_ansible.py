@@ -28,6 +28,10 @@ def is_secret(
     return False
 
 
+def patch_port(port_line: str, new_key):
+    return re.sub("^\d+", new_key, port_line)
+
+
 linux_server_io_image_patt = re.compile(r"lscr.io/linuxserver/")
 linuxserver_io_env_defaults = {"TZ": "Europe/Zurich"}
 
@@ -59,7 +63,9 @@ linuxserver_io_env_defaults = {"TZ": "Europe/Zurich"}
 )
 @click.option("--proxy-container", help="Container name to add to the proxy network")
 @click.option("--role-name", "-n", default="docker_", show_default=True)
-@click.option("--min-secret-length", default=default_min_secret_len, type=int, show_default=True)
+@click.option(
+    "--min-secret-length", default=default_min_secret_len, type=int, show_default=True
+)
 @click.option(
     "--ext-proxy-net",
     "-e",
@@ -68,11 +74,7 @@ linuxserver_io_env_defaults = {"TZ": "Europe/Zurich"}
     show_default=True,
 )
 @click.option(
-    "--out",
-    "-o",
-    help="Output file",
-    type=click.Path(path_type=Path),
-    required=False
+    "--out", "-o", help="Output file", type=click.Path(path_type=Path), required=False
 )
 def main(
     files,
@@ -100,6 +102,9 @@ def main(
 
     def variable_from_env(key):
         return f"{defaults_prefix}{normalize_key_and_name(key)}"
+
+    def variable_from_port(service_name: str, exposed_port: int):
+        return f"{defaults_prefix}host_port_{service_name}_{exposed_port}"
 
     yaml_config = subprocess.check_output(
         (
@@ -131,7 +136,7 @@ def main(
         "proxy_container": proxy_container,
         "backup_paths": [],
         "example_playbook": [],
-        "exposed_ports": [],
+        "exposed_ports_by_service": defaultdict(list),
         "volume_defaults": {},
         "images_tags": [],
         "external_proxy_net": ext_proxy_net,
@@ -201,7 +206,10 @@ def main(
             return
         for port in data["ports"]:
             if port.get("published"):
-                bootstrap_data["exposed_ports"].append(int(port["published"]))
+                host_port = int(port["published"])
+                bootstrap_data["exposed_ports_by_service"][name].append(host_port)
+                key = variable_from_port(name, host_port)
+                add_to_defaults(key, host_port, name)
 
     def handle_svc_volumes(name: str, data, volumes: dict):
         for vol in data.get("volumes", []):
@@ -293,6 +301,19 @@ def main(
                     data["volumes"][ix] = data["volumes"][ix].replace(
                         val, f"{{{{ {volume_defaults[val]} }}}}"
                     )
+            new_ports = []
+            for port_entry, exposed_port in zip(
+                data.get("ports", []),
+                bootstrap_data["exposed_ports_by_service"].get(name, []),
+            ):
+                new_ports.append(
+                    patch_port(
+                        port_entry,
+                        f"{{{{ {variable_from_port(name, exposed_port)} }}}}",
+                    )
+                )
+            if new_ports:
+                data["ports"] = new_ports
             img = data["image"]
             new_tag = f"{{{{ {variable_from_env(releases_key)}['{name}'] }}}}"
             data["image"] = patch_image_tag(img, new_tag)
