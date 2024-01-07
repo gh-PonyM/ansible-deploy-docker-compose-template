@@ -16,7 +16,7 @@ cli_argv:
   - --out
   - "{{ cli_output_file_path }}"
   - --defaults-prefix
-  - "{{ project_name }}"
+  - "{{ ansible_defaults_prefix }}"
   - --ext-proxy-net
   - "{{ ext_proxy_net }}"
   - "{{ '--proxy-container' if proxy_container_net_attach else '' }}"
