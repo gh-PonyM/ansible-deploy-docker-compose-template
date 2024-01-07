@@ -103,8 +103,8 @@ def main(
     def variable_from_env(key):
         return f"{defaults_prefix}{normalize_key_and_name(key)}"
 
-    def variable_from_port(service_name: str, exposed_port: int):
-        return f"{defaults_prefix}host_port_{service_name}_{exposed_port}"
+    def variable_from_port(service_name: str, exposed_port: int, add_prefix: bool = True):
+        return f"{defaults_prefix if add_prefix else ''}host_port_{service_name}_{exposed_port}"
 
     yaml_config = subprocess.check_output(
         (
@@ -208,7 +208,7 @@ def main(
             if port.get("published"):
                 host_port = int(port["published"])
                 bootstrap_data["exposed_ports_by_service"][name].append(host_port)
-                key = variable_from_port(name, host_port)
+                key = variable_from_port(name, host_port, add_prefix=False)
                 add_to_defaults(key, host_port, name)
 
     def handle_svc_volumes(name: str, data, volumes: dict):

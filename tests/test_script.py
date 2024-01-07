@@ -18,7 +18,7 @@ def find_in(items, key: str, value):
 )
 def test_doco_pihole(runner, fixture_path):
     file = fixture_path / "pihole.yml"
-    def_prefix = "ph_"
+    def_prefix = "phh_"
     role_name = "pihole"
     r = runner.invoke(
         main,
@@ -63,8 +63,9 @@ def test_doco_pihole(runner, fixture_path):
 
     # test final compose
     compose = data["final_compose"]
-    svc = compose["services"]["pihole"]
-    assert svc["image"] == f"pihole/pihole:{{{{ {def_prefix}releases['pihole'] }}}}"
+    svc_name = "pihole"
+    svc = compose["services"][svc_name]
+    assert svc["image"] == f"pihole/pihole:{{{{ {def_prefix}releases['{svc_name}'] }}}}"
 
     # test networks
     assert data["proxy_container"] is None
@@ -73,9 +74,11 @@ def test_doco_pihole(runner, fixture_path):
     ), "original compose does not list networks and no proxy_container was given to the cli"
 
     # test volumes
-    assert data["volume_defaults"]["./etc-pihole"] == "ph_pihole_mount_dir"
-    assert svc["volumes"][0] == "{{ ph_pihole_mount_dir }}:/etc/pihole"
-    assert svc["volumes"][1] == "{{ ph_dnsmasq_d_mount_dir }}:/etc/dnsmasq.d"
+    assert data["volume_defaults"]["./etc-pihole"] == f"{def_prefix}pihole_mount_dir"
+    assert svc["volumes"][0] == f"{{{{ {def_prefix}pihole_mount_dir }}}}:/etc/pihole"
+    assert svc["volumes"][1] == f"{{{{ {def_prefix}dnsmasq_d_mount_dir }}}}:/etc/dnsmasq.d"
 
     # test ports
-    assert svc["ports"][0] == "{{ ph_host_port_pihole_53 }}:53/tcp"
+    assert svc["ports"][0] == f"{{{{ {def_prefix}host_port_pihole_53 }}}}:53/tcp"
+    print(list(d["key"] for d in defaults))
+    assert find_in(defaults, "key", f"{def_prefix}host_port_pihole_53")
