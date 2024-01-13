@@ -1,5 +1,9 @@
 ---
 
+# the user that should run manage docker
+docker_user: dockerusr
+docker_user_id: 1002
+
 # path to the compose file to convert
 # currently only one compose file at a time is supported
 compose_file_path: "{{ undef(hint='Provide the path to a docker-compose.yml file') }}"
@@ -7,7 +11,7 @@ compose_file_path: "{{ undef(hint='Provide the path to a docker-compose.yml file
 # minimum length for secrets to be created by the secret provider
 min_secret_length: 17
 
-# project name, defaults to the parent folder which should be names the same
+# project name, defaults to the parent folder which should be named the same
 # as the main service inside the docker-compose.yml file
 project_name: "{{ compose_file_path | dirname | basename }}"
 
@@ -16,7 +20,7 @@ project_role_name: "docker_{{ project_name }}"
 
 # parent folder where the role should be created.
 # If used inside an ansible repo, should default ansible cfs role_path
-out_roles_path: "{{ undef(hint='Provide the path to a docker-compose.yml file') }}"
+out_roles_path: "{{ undef(hint='Provide the path the roles directory') }}"
 
 # prefix used for each environment config variable when transformed to an
 # role default, defaults to the project_name

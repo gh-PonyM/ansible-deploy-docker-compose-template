@@ -16,6 +16,8 @@
     name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
     state: "{{ \VAR{ cli_output['defaults_prefix'] }state | default('present') }}"
     create_home: true
+    uid: "{{ \VAR{ cli_output['defaults_prefix'] }user_id }}"
+    shell: /bin/bash
 
 - name: Ensure user is added to the docker group.
   user:
@@ -39,7 +41,7 @@
     attachable: true
     state: present
 
-- name: \VAR{ cli_output['role_name'] } | test docker-compose changed
+- name: test docker-compose changed
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
@@ -48,7 +50,7 @@
   check_mode: true
   register: repo_copy_test
 
-- name: \VAR{ cli_output['role_name'] } | Stop services since compose has changed
+- name: Stop services since compose has changed
   community.docker.docker_compose:
     project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
     project_src: "{{ repository_src }}"
@@ -63,7 +65,7 @@
   - repo_copy_test.changed
   ignore_errors: true
 
-- name: \VAR{ cli_output['role_name'] } | Copy docker-compose.yml
+- name: Copy docker-compose.yml
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
@@ -76,7 +78,7 @@
   loop: "{{ \VAR{ cli_output['defaults_prefix'] }pre_startup_commands }}"
   become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
 
-- name: \VAR{ cli_output['role_name'] } | ensure services are running
+- name: Ensure services are {{ \VAR{ cli_output['defaults_prefix'] }state }}
   community.docker.docker_compose:
     project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
     project_src: "{{ repository_src }}"
@@ -90,12 +92,12 @@
   become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
   when: not \VAR{ cli_output['defaults_prefix'] }remove
 
-- name: \VAR{ cli_output['role_name'] } | Run post-shutdown commands
+- name: Run post-shutdown commands
   command: "{{ item }}"
   loop: "{{ \VAR{ cli_output['defaults_prefix'] }post_shutdown_commands }}"
   become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
 
-- name: \VAR{ cli_output['role_name'] } | Put auto-update script
+- name: Put auto-update script
   copy:
     content: |
       #!/usr/bin/env bash

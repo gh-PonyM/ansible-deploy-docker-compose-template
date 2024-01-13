@@ -26,7 +26,8 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
     # ansible deploy defaults
-    \VAR{ cli_output['defaults_prefix'] }user: dockerusr
+    \VAR{ cli_output['defaults_prefix'] }user: \VAR{ docker_user }
+    \VAR{ cli_output['defaults_prefix'] }user_id: \VAR{ docker_user_id }
     \VAR{ cli_output['defaults_prefix'] }ext_net: \VAR{ cli_output['external_proxy_net'] }
     \VAR{ cli_output['defaults_prefix'] }project_name: \VAR{ cli_output['role_name'] }
   roles:
