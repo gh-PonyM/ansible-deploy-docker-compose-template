@@ -44,3 +44,18 @@
 \VAR{ key }: "\VAR{ val }"
 \BLOCK{ endfor }
 \BLOCK{ endif }
+
+# pre-docker compose command using command module
+\VAR{ cli_output['defaults_prefix'] }pre_startup_commands: []
+
+# post-docker down commands
+\VAR{ cli_output['defaults_prefix'] }post_shutdown_commands: []
+
+# enable automatic updates for latest tag
+\VAR{ cli_output['defaults_prefix'] }auto_update: false
+
+# When to update the contains using cron
+\VAR{ cli_output['defaults_prefix'] }auto_update_cron_hour: "3"
+\VAR{ cli_output['defaults_prefix'] }auto_update_cron_minute: "0"
+\VAR{ cli_output['defaults_prefix'] }auto_update_cron_weekday: "0"
+\VAR{ cli_output['defaults_prefix'] }auto_update_cron_month: "*"
