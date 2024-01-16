@@ -17,6 +17,7 @@
     argv: "{{ cli_argv | select() }}"
   delegate_to: 127.0.0.1
   connection: local
+  changed_when: false
 
 - slurp:
     src: "{{ cli_output_file_path }}"
@@ -34,11 +35,11 @@
     dest: "{{ output_role_path }}/playbook.example.yml"
     owner: "{{ user }}"
     group: "{{ user }}"
-    block_start_string: '\BLOCK{'
-    block_end_string: '}'
     trim_blocks: true
-    variable_start_string: '\VAR{'
-    variable_end_string: '}'
+    block_start_string: '[%'
+    block_end_string: '%]'
+    variable_start_string: '[['
+    variable_end_string: ']]'
 
 - name: Render default and vars files
   template:
@@ -46,11 +47,11 @@
     dest: "{{ output_role_path }}/{{ item }}/main.yml"
     owner: "{{ user }}"
     group: "{{ user }}"
-    block_start_string: '\BLOCK{'
-    block_end_string: '}'
     trim_blocks: true
-    variable_start_string: '\VAR{'
-    variable_end_string: '}'
+    block_start_string: '[%'
+    block_end_string: '%]'
+    variable_start_string: '[['
+    variable_end_string: ']]'
   loop:
     - vars
     - defaults
@@ -68,11 +69,11 @@
     dest: "{{ output_role_path }}/tasks/{{ item }}"
     owner: "{{ user }}"
     group: "{{ user }}"
-    block_start_string: '\BLOCK{'
-    block_end_string: '}'
     trim_blocks: true
-    variable_start_string: '\VAR{'
-    variable_end_string: '}'
+    block_start_string: '[%'
+    block_end_string: '%]'
+    variable_start_string: '[['
+    variable_end_string: ']]'
   loop:
    - install.yml
    - main.yml

@@ -9,19 +9,19 @@
       - docker-compose
     extra_args: --user
     executable: pip3
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
 
-- name: ensure deployment user for \VAR{ cli_output['role_name'] }
+- name: ensure deployment user for [[ cli_output['role_name'] ]]
   user:
-    name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
-    state: "{{ \VAR{ cli_output['defaults_prefix'] }state | default('present') }}"
+    name: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    state: "{{ [[ cli_output['defaults_prefix'] ]]state | default('present') }}"
     create_home: true
-    uid: "{{ \VAR{ cli_output['defaults_prefix'] }user_id }}"
+    uid: "{{ [[ cli_output['defaults_prefix'] ]]user_id }}"
     shell: /bin/bash
 
 - name: Ensure user is added to the docker group.
   user:
-    name: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    name: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     groups: docker
     append: true
 
@@ -29,14 +29,14 @@
   file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   loop:
    - "{{ repository_src }}"
    - "{{ repository_src }}/scripts"
 
 - name: ensure external network exists
   community.docker.docker_network:
-    name: "{{ \VAR{ cli_output['defaults_prefix'] }ext_net }}"
+    name: "{{ [[ cli_output['defaults_prefix'] ]]ext_net }}"
     driver: bridge
     attachable: true
     state: present
@@ -45,23 +45,23 @@
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
-    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     mode: "600"
   check_mode: true
   register: repo_copy_test
 
 - name: Stop services since compose has changed
   community.docker.docker_compose:
-    project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ repository_src }}"
     state: absent
     files:
-\BLOCK{ for f in cli_output['compose_files'] }
-      - \VAR{ f | basename }
-\BLOCK{ endfor }
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+[% for f in cli_output['compose_files'] %]
+      - [[ f | basename ]]
+[% endfor %]
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
-  - not \VAR{ cli_output['defaults_prefix'] }remove
+  - not [[ cli_output['defaults_prefix'] ]]remove
   - repo_copy_test.changed
   ignore_errors: true
 
@@ -69,33 +69,33 @@
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
-    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     mode: "600"
   register: repo_copy
 
 - name: Run pre-start commands
   command: "{{ item }}"
-  loop: "{{ \VAR{ cli_output['defaults_prefix'] }pre_startup_commands }}"
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
 
-- name: Ensure services are {{ \VAR{ cli_output['defaults_prefix'] }state }}
+- name: Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
-    project_name: "{{ \VAR{ cli_output['defaults_prefix'] }project_name }}"
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ repository_src }}"
     debug: true
-    state: "{{ \VAR{ cli_output['defaults_prefix'] }state }}"
+    state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
     build: false
     files:
-\BLOCK{ for f in cli_output['compose_files'] }
-      - \VAR{ f | basename }
-\BLOCK{ endfor }
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
-  when: not \VAR{ cli_output['defaults_prefix'] }remove
+[% for f in cli_output['compose_files'] %]
+      - [[ f | basename ]]
+[% endfor %]
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  when: not [[ cli_output['defaults_prefix'] ]]remove
 
 - name: Run post-shutdown commands
   command: "{{ item }}"
-  loop: "{{ \VAR{ cli_output['defaults_prefix'] }post_shutdown_commands }}"
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  loop: "{{ [[ cli_output['defaults_prefix'] ]]post_shutdown_commands }}"
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
 
 - name: Put auto-update script
   copy:
@@ -108,20 +108,20 @@
       docker compose up -d
 
     dest: "{{ repository_src }}/autoupdate.sh"
-    owner: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     mode: "770"
-    state: "{{ 'present' if \VAR{ cli_output['defaults_prefix'] }auto_update else 'absent' }}"
+    state: "{{ 'present' if [[ cli_output['defaults_prefix'] ]]auto_update else 'absent' }}"
 
 - name: Set auto-update cron to {{ cron_state }}
   cron:
-    name: update all services for \VAR{ cli_output['role_name'] }
+    name: update all services for [[ cli_output['role_name'] ]]
     job: "{{ repository_src }}/autoupdate.sh"
-    hour: "{{ \VAR{ cli_output['defaults_prefix'] }auto_update_cron_hour }}"
-    minute: "{{ \VAR{ cli_output['defaults_prefix'] }auto_update_cron_minute }}"
-    weekday: "{{ \VAR{ cli_output['defaults_prefix'] }auto_update_cron_weekday }}"
-    month: "{{ \VAR{ cli_output['defaults_prefix'] }auto_update_cron_month }}"
-    user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+    hour: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_hour }}"
+    minute: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_minute }}"
+    weekday: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_weekday }}"
+    month: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_month }}"
+    user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     state: "{{ cron_state }}"
-  become_user: "{{ \VAR{ cli_output['defaults_prefix'] }user }}"
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   vars:
-    cron_state: "{{ 'present' if \VAR{ cli_output['defaults_prefix'] }auto_update else 'absent' }}"
+    cron_state: "{{ 'present' if [[ cli_output['defaults_prefix'] ]]auto_update else 'absent' }}"
