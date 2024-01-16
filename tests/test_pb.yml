@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - import_role:
+        name: ../../deploy-docker-compose-template

@@ -1,17 +1,17 @@
 ---
 - hosts: localhost
   vars:
-\BLOCK{ for def in cli_output['defaults'] }
-\BLOCK{ if def['is_secret'] }
-    \VAR{ def.key }: "\VAR{ def['secret_expr'] }"
+\BLOCK{ for d in cli_output['defaults'] }
+\BLOCK{ if d['is_secret'] }
+    \VAR{ d.key }: "\VAR{ d['secret_expr'] }"
 \BLOCK{ else }
-\BLOCK{ if val is mapping }
-    \VAR{ def.key }:
-\BLOCK{ for k, v in val.items() }
+\BLOCK{ if d.value is mapping }
+    \VAR{ d.key }:
+\BLOCK{ for k, v in d.value.items() }
       \VAR{ k }: "\VAR{ v }"
 \BLOCK{ endfor }
 \BLOCK{ else }
-    \VAR{ def.key }: \VAR{ def['value'] }
+    \VAR{ d.key }: \VAR{ d['value'] }
 \BLOCK{ endif }
 \BLOCK{ endif }
 \BLOCK{ endfor }

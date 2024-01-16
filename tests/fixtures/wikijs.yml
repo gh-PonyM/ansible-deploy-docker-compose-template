@@ -1,0 +1,15 @@
+---
+version: "3.8"
+services:
+  wikijs:
+    image: lscr.io/linuxserver/wikijs:latest
+    container_name: wikijs
+    environment:
+      - PUID=1002
+      - PGID=1002
+      - TZ=Europe/Berlin
+      - DB_TYPE=sqlite
+    volumes:
+      - ./config:/config
+      - ./data:/data
+    restart: unless-stopped

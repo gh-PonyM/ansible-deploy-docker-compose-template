@@ -1,5 +1,4 @@
 import json
-import re
 import shutil
 
 import pytest
@@ -76,7 +75,9 @@ def test_doco_pihole(runner, fixture_path):
     # test volumes
     assert data["volume_defaults"]["./etc-pihole"] == f"{def_prefix}pihole_mount_dir"
     assert svc["volumes"][0] == f"{{{{ {def_prefix}pihole_mount_dir }}}}:/etc/pihole"
-    assert svc["volumes"][1] == f"{{{{ {def_prefix}dnsmasq_d_mount_dir }}}}:/etc/dnsmasq.d"
+    assert (
+        svc["volumes"][1] == f"{{{{ {def_prefix}dnsmasq_d_mount_dir }}}}:/etc/dnsmasq.d"
+    )
 
     # test ports
     assert svc["ports"][0] == f"{{{{ {def_prefix}host_port_pihole_53 }}}}:53/tcp"
