@@ -15,3 +15,24 @@
 [% endif %]
 [% endif %]
 [% endfor %]
+
+[% for val, key in cli_output.get('volume_defaults', {}).items() %]
+    [[ key ]]: "[[ val ]]"
+[% endfor %]
+[%- if cli_output['backup_paths'] %]
+    # backups
+    borgbackup_include:
+[% for path in cli_output['backup_paths'] %]
+    - [[ path ]]
+[% endfor %]
+[% endif %]
+    # ansible deploy defaults
+    [[ cli_output['defaults_prefix'] ]]user: [[ docker_user ]]
+    [[ cli_output['defaults_prefix'] ]]user_id: [[ docker_user_id ]]
+    [[ cli_output['defaults_prefix'] ]]ext_net: [[ cli_output['external_proxy_net'] ]]
+    [[ cli_output['defaults_prefix'] ]]project_name: [[ cli_output['role_name'] ]]
+  roles:
+  - role: docker
+    tags: docker
+  - role: [[ cli_output['role_name'] ]]
+    tags: [[ cli_output['role_name'] ]]
