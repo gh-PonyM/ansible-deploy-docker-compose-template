@@ -112,7 +112,7 @@
     dest: "{{ repository_src }}/autoupdate.sh"
     owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
     mode: "770"
-    state: "{{ 'present' if [[ cli_output['defaults_prefix'] ]]auto_update else 'absent' }}"
+  when: [[ cli_output['defaults_prefix'] ]]auto_update
 
 - name: Set auto-update cron to {{ cron_state }}
   cron:
