@@ -60,3 +60,8 @@
 [[ cli_output['defaults_prefix'] ]]auto_update_cron_minute: "0"
 [[ cli_output['defaults_prefix'] ]]auto_update_cron_weekday: "0"
 [[ cli_output['defaults_prefix'] ]]auto_update_cron_month: "*"
+
+# removes previously installed python package docker and docker-compose
+remove_legacy_docker_python_deps: false
+# virtual env for python deps controlling docker
+docker_utils_venv_path: /opt/ansible_venvs/docker_venv
