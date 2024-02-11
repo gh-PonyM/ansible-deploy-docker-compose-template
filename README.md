@@ -1,7 +1,12 @@
 # deploy-docker-compose-template
 
 Makes converting a docker-compose.yml setup into an ansible role faster. The templates works in conjunction with the 
-script `dc_to_ansible.py` that extracts information from one compose file. 
+script `dc_to_ansible.py` that extracts information from one compose file.
+
+## Current limitations
+
+- If any of the `docker-compose.yml` defaults have  `{{` in it, you have to override the ansible default with `!unsafe "{{ ..."`
+- Installation of dependency `PyYAML==5.4.2` of the `docker-compose` python package fails on python 3.11, see [issue](https://github.com/yaml/pyyaml/issues/601)
 
 **dc_to_ansible.py**
 
@@ -9,7 +14,7 @@ The cli can be used standalone and the generated json used for other things. Her
 
 - Uses `docker compose config` in order to analyze the compose file.
 - Identifies secret strings and construct a **secret path** using one of the supported **secret provider**
-  - Uses the length of the example secret inside of the `docker-compose.yml` or uses `min_secret_length`, whatever is longer
+  - Uses the length of the example secret in `docker-compose.yml` or uses `min_secret_length`, whatever is longer
 - Transforms env vars into ansible **defaults**
 - Identifies all exposed ports of the setup (e.g. might be used for firewall rules config by ansible)
 - Identifies mounted volumes locally or docker volumes and extracts paths for eventual backup configs
