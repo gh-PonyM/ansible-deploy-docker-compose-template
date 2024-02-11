@@ -7,6 +7,7 @@ script `dc_to_ansible.py` that extracts information from one compose file.
 
 - If any of the `docker-compose.yml` defaults have  `{{` in it, you have to override the ansible default with `!unsafe "{{ ..."`
 - Installation of dependency `PyYAML==5.4.2` of the `docker-compose` python package fails on python 3.11, see [issue](https://github.com/yaml/pyyaml/issues/601)
+- The service names inside `docker-compose.yml` shall not use spaces or `-`. Always use `_` to be compatible with ansible variables
 
 **dc_to_ansible.py**
 
