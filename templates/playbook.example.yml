@@ -32,7 +32,7 @@
     [[ cli_output['defaults_prefix'] ]]ext_net: [[ cli_output['external_proxy_net'] ]]
     [[ cli_output['defaults_prefix'] ]]project_name: [[ cli_output['role_name'] ]]
   roles:
-  - role: docker
+  - role: geerlingguy.docker
     tags: docker
   - role: [[ cli_output['role_name'] ]]
     tags: [[ cli_output['role_name'] ]]

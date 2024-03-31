@@ -3,10 +3,14 @@
 Makes converting a docker-compose.yml setup into an ansible role faster. The templates works in conjunction with the 
 script `dc_to_ansible.py` that extracts information from one compose file.
 
+## Docker compose versions
+
+- As of version 2.18.0, docker compose v2 module can be used. This requires `python-docker` package and `docker-compose-plugin` apt packages to be installed.
+- For docker compose v1, use `compose_v1: true`. This installs docker-compose python package and the docker package as pip package for docker user. (You might need the package `acl` installed when you run into privilege escalation problems)
+
 ## Current limitations
 
 - If any of the `docker-compose.yml` defaults have  `{{` in it, you have to override the ansible default with `!unsafe "{{ ..."`
-- Installation of dependency `PyYAML==5.4.2` of the `docker-compose` python package fails on python 3.11, see [issue](https://github.com/yaml/pyyaml/issues/601)
 - The service names inside `docker-compose.yml` shall not use spaces or `-`. Always use `_` to be compatible with ansible variables
 
 **dc_to_ansible.py**

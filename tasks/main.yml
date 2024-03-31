@@ -12,6 +12,7 @@
    - tasks
    - templates
 
+
 - name: call dc_to_ansible.py
   command:
     argv: "{{ cli_argv | select() }}"
@@ -78,6 +79,33 @@
    - install.yml
    - main.yml
    - remove.yml
+
+- name: Create molecule directories
+  file:
+    path: "{{ output_role_path }}/{{ item }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+  loop:
+   - molecule
+   - molecule/default
+  when: molecule_docker_test
+
+- name: Copy molecule test files
+  template:
+    src: "molecule/default/{{ item }}"
+    dest: "{{ output_role_path }}/molecule/default/{{ item }}"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    trim_blocks: true
+    block_start_string: '[%'
+    block_end_string: '%]'
+    variable_start_string: '[['
+    variable_end_string: ']]'
+  loop:
+    - converge.yml
+    - molecule.yml
+  when: molecule_docker_test
 
 - name: Render README.md
   template:

@@ -1,8 +1,8 @@
-import copy
 import json
 import re
 import subprocess
 from collections import defaultdict
+from json import JSONDecodeError
 from pathlib import Path
 import typing as t
 import click
@@ -118,7 +118,11 @@ def main(
         ),
         encoding="utf-8",
     )
-    yaml_data: dict = json.loads(yaml_config)
+    try:
+        yaml_data: dict = json.loads(yaml_config)
+    except JSONDecodeError:
+        # see bug https://github.com/docker/compose/issues/11669
+        yaml_data = yaml.safe_load(yaml_config)
 
     bootstrap_data: dict = {
         "role_name": normalize_key_and_name(role_name),

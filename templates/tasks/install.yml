@@ -14,37 +14,26 @@
     groups: docker
     append: true
 
-- name: Ensure docker venv parent directory
-  file:
-    state: directory
-    path: "{{ docker_utils_venv_path | dirname }}"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-  become: true
-
-- name: Remove system wide docker python deps (pep668)
-  pip:
-    name:
-      - docker==6.1.3
-      - docker-compose
-    state: absent
-    executable: pip3
-  become: true
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-  when: remove_legacy_docker_python_deps
-
 # Issues with docker python package >=7.0.0
 # https://github.com/docker/docker-py/releases/tag/7.0.0
 # https://github.com/docker/docker-py/issues/3194
-- name: Ensure docker python packages
+- name: legacy | Ensure docker python packages compose v1
   pip:
     name:
       - docker==6.1.3
       - docker-compose
-    virtualenv: "{{ docker_utils_venv_path }}"
-    virtualenv_command: "{{ ansible_python_interpreter | default(discovered_interpreter_python) }} -m venv"
   become: true
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  when: compose_v1
+
+- name: Install Docker dependencies for modules
+  apt:
+    name:
+      - python3-docker
+      - python3-requests
+    update_cache: true
+  become: true
+  when: not compose_v1
 
 # Read this blogpost: https://forum.ansible.com/t/breaking-changes-with-pip-and-system-packages/2177
 - name: Overwrite the ansible_python_interpreter
@@ -67,6 +56,11 @@
     attachable: true
     state: present
 
+- name: Check if docker-compose.yml exists
+  stat:
+    path: "{{ repository_src }}/docker-compose.yml"
+  register: compose
+
 - name: test docker-compose changed
   template:
     src: "docker-compose.yml"
@@ -75,8 +69,9 @@
     mode: "600"
   check_mode: true
   register: repo_copy_test
+  when: not compose.stat.exists
 
-- name: Stop services since compose has changed
+- name: legacy | Stop services since compose has changed
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ repository_src }}"
@@ -87,9 +82,26 @@
 [% endfor %]
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
+  - compose_v1
   - not [[ cli_output['defaults_prefix'] ]]remove
+  - compose.stat.exists
   - repo_copy_test.changed
-  ignore_errors: true
+
+- name: Stop services since compose has changed
+  community.docker.docker_compose_v2:
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
+    project_src: "{{ repository_src }}"
+    state: absent
+    files:
+[% for f in cli_output['compose_files'] %]
+      - [[ f | basename ]]
+[% endfor %]
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  when:
+  - not compose_v1
+  - not [[ cli_output['defaults_prefix'] ]]remove
+  - compose.stat.exists
+  - repo_copy_test.changed
 
 - name: Copy docker-compose.yml
   template:
@@ -104,7 +116,7 @@
   loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
 
-- name: Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
+- name: legacy | Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ repository_src }}"
@@ -116,7 +128,25 @@
       - [[ f | basename ]]
 [% endfor %]
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-  when: not [[ cli_output['defaults_prefix'] ]]remove
+  when:
+    - compose_v1
+    - not [[ cli_output['defaults_prefix'] ]]remove
+
+# Requires community.docker >= 3.8.0. ansible-galaxy does not handle collection dependencies in roles meta/main.yml
+- name: Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
+  community.docker.docker_compose_v2:
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
+    project_src: "{{ repository_src }}"
+    state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
+    build: never
+    files:
+[% for f in cli_output['compose_files'] %]
+      - [[ f | basename ]]
+[% endfor %]
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  when:
+    - not compose_v1
+    - not [[ cli_output['defaults_prefix'] ]]remove
 
 - name: Run post-shutdown commands
   command: "{{ item }}"

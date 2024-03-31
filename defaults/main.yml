@@ -35,3 +35,6 @@ ext_proxy_net: proxy-tier
 # if to remove the cli json output used for project generation
 # can be checked into git if desired
 remove_cli_artefact: true
+
+# Add molecule test files using docker
+molecule_docker_test: false

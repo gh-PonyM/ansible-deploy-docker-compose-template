@@ -65,3 +65,4 @@
 remove_legacy_docker_python_deps: false
 # virtual env for python deps controlling docker
 docker_utils_venv_path: /opt/ansible_venvs/docker_venv
+compose_v1: false
