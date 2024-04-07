@@ -15,6 +15,29 @@ def find_in(items, key: str, value):
 @pytest.mark.skipif(
     not shutil.which("docker"), reason="Docker is not installed. but the cli calls it"
 )
+@pytest.mark.parametrize("file_name", ("wikijs.yml",))
+def test_cli_smoke_test(runner, fixture_path, file_name):
+    file = fixture_path / file_name
+    def_prefix = "xx_"
+    role_name = file_name.split(".")[0]
+    r = runner.invoke(
+        main,
+        [
+            "--file",
+            str(file.resolve()),
+            "--defaults-prefix",
+            def_prefix,
+            "--role-name",
+            role_name,
+        ],
+    )
+    assert r.exit_code == 0
+    print(r.stdout)
+
+
+@pytest.mark.skipif(
+    not shutil.which("docker"), reason="Docker is not installed. but the cli calls it"
+)
 def test_doco_pihole(runner, fixture_path):
     file = fixture_path / "pihole.yml"
     def_prefix = "phh_"
@@ -32,6 +55,7 @@ def test_doco_pihole(runner, fixture_path):
     )
     assert r.exit_code == 0
     json_raw = r.stdout
+    print(r.stdout)
     data = json.loads(json_raw)
     # print(json_raw)
 
@@ -83,3 +107,30 @@ def test_doco_pihole(runner, fixture_path):
     assert svc["ports"][0] == f"{{{{ {def_prefix}host_port_pihole_53 }}}}:53/tcp"
     print(list(d["key"] for d in defaults))
     assert find_in(defaults, "key", f"{def_prefix}host_port_pihole_53")
+
+
+def test_env_from_file(fixture_path, runner):
+    file = fixture_path / "minio.yml"
+    def_prefix = "minio_"
+    role_name = "minio"
+    r = runner.invoke(
+        main,
+        [
+            "--file",
+            str(file.resolve()),
+            "--defaults-prefix",
+            def_prefix,
+            "--role-name",
+            role_name,
+            "--proxy-container",
+            "minio"
+        ],
+    )
+    print(r.stdout)
+    assert r.exit_code == 0
+    json_raw = r.stdout
+    data = json.loads(json_raw)
+    # test defaults
+    defaults_ = data["defaults"]
+    vol = find_in(defaults_, "original_key", "MINIO_VOLUMES")
+    assert vol["env_file"]

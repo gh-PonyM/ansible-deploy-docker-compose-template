@@ -1,5 +1,11 @@
 ---
 
+[% macro or_env_files_changed() -%]
+[%- if cli_output.env_files -%]
+[% for fn_id in cli_output.env_files.values() %] or [[ fn_id ]].changed[% endfor %]
+[%- endif -%]
+[% endmacro -%]
+
 - name: ensure deployment user for [[ cli_output['role_name'] ]]
   user:
     name: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
@@ -35,11 +41,6 @@
   become: true
   when: not compose_v1
 
-# Read this blogpost: https://forum.ansible.com/t/breaking-changes-with-pip-and-system-packages/2177
-- name: Overwrite the ansible_python_interpreter
-  set_fact:
-    ansible_python_interpreter: "{{ docker_utils_venv_path }}/bin/python"
-
 - name: Ensure repository paths are present
   file:
     path: "{{ item }}"
@@ -61,6 +62,29 @@
     path: "{{ repository_src }}/docker-compose.yml"
   register: compose
 
+[% set env_from_file = cli_output.defaults | rejectattr('env_file', 'eq', None) | list -%]
+[% if env_from_file %]
+[% for fn, service_defaults in env_from_file | groupby('env_file') %]
+- name: Ensure parent folders for env files exists
+  file:
+    path: "{{ repository_src + '/' +  item | dirname }}"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    state: directory
+  loop: [[ cli_output.env_files | list | to_yaml ]]
+- name: Render env file [[ fn ]]
+  copy:
+    dest: "{{ repository_src }}/[[ fn ]]"
+    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    content: |
+[% for data in service_defaults %]
+      [[ data.original_key ]]="{{ [[ data.key ]] }}"
+[% endfor %]
+  register: [[ cli_output.env_files[fn] ]]
+
+[% endfor %]
+[%- endif %]
 - name: test docker-compose changed
   template:
     src: "docker-compose.yml"
@@ -69,7 +93,7 @@
     mode: "600"
   check_mode: true
   register: repo_copy_test
-  when: not compose.stat.exists
+  when: compose.stat.exists
 
 - name: legacy | Stop services since compose has changed
   community.docker.docker_compose:
@@ -85,7 +109,7 @@
   - compose_v1
   - not [[ cli_output['defaults_prefix'] ]]remove
   - compose.stat.exists
-  - repo_copy_test.changed
+  - repo_copy_test.changed[[ or_env_files_changed() ]]
 
 - name: Stop services since compose has changed
   community.docker.docker_compose_v2:
@@ -101,7 +125,7 @@
   - not compose_v1
   - not [[ cli_output['defaults_prefix'] ]]remove
   - compose.stat.exists
-  - repo_copy_test.changed
+  - repo_copy_test.changed[[ or_env_files_changed() ]]
 
 - name: Copy docker-compose.yml
   template:
