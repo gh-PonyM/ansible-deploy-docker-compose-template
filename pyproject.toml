@@ -11,6 +11,7 @@ packages = [{include = "scripts"}]
 python = "^3.10"
 pydantic = "^2.6.4"
 click = "^8.1.7"
+pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.1"
