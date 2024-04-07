@@ -113,6 +113,7 @@ def test_env_from_file(fixture_path, runner):
     file = fixture_path / "minio.yml"
     def_prefix = "minio_"
     role_name = "minio"
+    uid = "999"
     r = runner.invoke(
         main,
         [
@@ -123,7 +124,9 @@ def test_env_from_file(fixture_path, runner):
             "--role-name",
             role_name,
             "--proxy-container",
-            "minio"
+            "minio",
+            "--uid",
+            uid
         ],
     )
     print(r.stdout)
@@ -134,3 +137,4 @@ def test_env_from_file(fixture_path, runner):
     defaults_ = data["defaults"]
     vol = find_in(defaults_, "original_key", "MINIO_VOLUMES")
     assert vol["env_file"]
+    assert data["final_compose"]["services"]["minio"]["user"] == f"{uid}:{uid}"

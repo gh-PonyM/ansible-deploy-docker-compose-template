@@ -23,3 +23,5 @@ cli_argv:
   - "{{ ext_proxy_net }}"
   - "{{ '--proxy-container' if proxy_container_net_attach else '' }}"
   - "{{ proxy_container_net_attach | default('',  true) }}"
+  - --uid
+  - "{{ docker_user_id }}"

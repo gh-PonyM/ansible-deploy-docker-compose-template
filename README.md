@@ -21,6 +21,7 @@ The cli can be used standalone and the generated json used for other things. Her
 - Identifies secret strings and construct a **secret path** using one of the supported **secret provider**
   - Uses the length of the example secret in `docker-compose.yml` or uses `min_secret_length`, whatever is longer
 - Transforms env vars into ansible **defaults**
+- If a `user` key is present for a service, it signals a rootless deployment (either `user: 1000` oder with a group: `user: 1000:1000`). The uid is replaced with `docker_user_id` from the roles defaults
 - Identifies all exposed ports of the setup (e.g. might be used for firewall rules config by ansible)
 - Identifies mounted volumes locally or docker volumes and extracts paths for eventual backup configs
 - Generates a final combined docker-compose config injecting external `proxy-tier` network if needed.
@@ -48,6 +49,8 @@ Starting from version 1.2.0, the cli install its dependencies (`pydantic`) into 
       -e, --ext-proxy-net TEXT        Name of the external proxy net  [default:
                                       proxy-tier]
       -o, --out PATH                  Output file
+      --uid INTEGER                   The users uid to use if user is defined on
+                                      any service
       --help                          Show this message and exit.
 
 

@@ -80,6 +80,9 @@ def patch_port(port_line: str, new_key):
 @click.option(
     "--out", "-o", help="Output file", type=click.Path(path_type=Path), required=False
 )
+@click.option(
+    "--uid", help="The users uid to use if user is defined on any service", type=int, required=False
+)
 def main(
     files,
     defaults_prefix,
@@ -90,6 +93,7 @@ def main(
     min_secret_length,
     ext_proxy_net,
     out,
+    uid
 ):
     """Converts a docker-compose file into an ansible role"""
 
@@ -374,6 +378,8 @@ def main(
             img = data["image"]
             new_tag = f"{{{{ {variable_from_env(releases_key)}['{name}'] }}}}"
             data["image"] = patch_image_tag(img, new_tag)
+            if uid and data.get("user"):
+                data["user"] = re.sub(r"\d+", str(uid), data["user"])
 
         final = handle_proxy_container(final)
         bootstrap_data["final_compose"] = final
