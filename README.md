@@ -1,7 +1,7 @@
 # deploy-docker-compose-template
 
 Makes converting a docker-compose.yml setup into an ansible role faster. The templates works in conjunction with the 
-script `dc_to_ansible.py` that extracts information from one compose file.
+script `dc_to_ansible.py` that extracts information from one compose file. **This role is meant to be used on an ansible controller machine with `connection: local`**.
 
 ## Docker compose versions
 
@@ -25,10 +25,12 @@ The cli can be used standalone and the generated json used for other things. Her
 - Identifies mounted volumes locally or docker volumes and extracts paths for eventual backup configs
 - Generates a final combined docker-compose config injecting external `proxy-tier` network if needed.
 
-The cli uses `click` and `PyYAML` as dependency, both of them should be available when ansible is installed.
+The cli uses `click` and `PyYAML` as dependency, both of them should be available when ansible is installed. 
+Starting from version 1.2.0, the cli install its dependencies (`pydantic`) into the path `cli_virtualenv_path`, which by default `.venv` inside the role installation path.
+
 
     Usage: dc_to_ansible.py [OPTIONS]
-    
+
       Converts a docker-compose file into an ansible role
     
     Options:

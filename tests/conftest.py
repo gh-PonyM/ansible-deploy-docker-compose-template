@@ -3,10 +3,22 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from traceback import print_tb
 
 import pytest
-from click.testing import CliRunner
+from click.testing import CliRunner as BaseCliRunner
 import typing as t
+
+
+class CliRunner(BaseCliRunner):
+    with_traceback = True
+
+    def invoke(self, cli, commands, **kwargs):
+        result = super(CliRunner, self).invoke(cli, commands, **kwargs)
+        if not result.exit_code == 0 and self.with_traceback:
+            print_tb(result.exc_info[2])
+            print(result.exception)
+        return result
 
 
 @pytest.fixture(scope="session")

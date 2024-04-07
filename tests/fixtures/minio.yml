@@ -1,0 +1,13 @@
+---
+
+services:
+  minio:
+    image: quay.io/minio/minio:latest
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_CONFIG_ENV_FILE: /etc/config.env
+    volumes:
+      - ./config/minio.env:/etc/config.env:ro
+      - ./data:/data/minio

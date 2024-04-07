@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json
+include:
+  - project: lksch-group/gitlab-ci-templates
+    ref: main
+    file: default-workflow-rules.yml
+  - project: lksch-group/gitlab-ci-templates
+    ref: main
+    file: python.yml
+
+stages:
+  - test
+  - build
+  - watch
+  - publish
+
+variables:
+  # Enable access to Gitlab package registry from Poetry
+  PROJECT_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}
+  PACKAGE_REGISTRY_URL: ${PROJECT_URL}/packages
+
+.release:
+  stage: publish
+  rules:
+    - if: $CI_COMMIT_TAG
+
+pytest:
+  extends: .python-poetry-dind
+  stage: test
+  tags:
+    - dind
+  script:
+    - export USER=$(id -un)
+    - poetry run pytest
+
+compose-spec:
+  stage: watch
+  script:
+    - ./create_compose_models.sh
+    - |-
+      CHANGES=$(git status --porcelain | wc -l)
+      if [ "$CHANGES" -gt "0" ]; then
+        echo "The Upstream docker-compose.yml jsonschema spec has changed"
+        git status --porcelain
+        exit 1
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+#publish-wheels:
+#  extends:
+#   - .python-poetry
+#   - .release
+#  script:
+#    - poetry build
+#    - poetry config --local repositories.gitlab ${PACKAGE_REGISTRY_URL}/pypi
+#    - poetry publish --repository gitlab
+
+create-gitlab-release:
+  extends: .release
+  image: registry.gitlab.com/gitlab-org/release-cli:v0.15.0
+  allow_failure: true
+#  needs:
+#    - publish-wheels
+  script:
+    - |
+      release-cli create \
+        --name $CI_COMMIT_TAG \
+        --tag-name $CI_COMMIT_TAG

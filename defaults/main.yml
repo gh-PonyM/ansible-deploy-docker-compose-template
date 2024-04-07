@@ -38,3 +38,6 @@ remove_cli_artefact: true
 
 # Add molecule test files using docker
 molecule_docker_test: false
+
+# CLI virtual env path
+cli_virtualenv_path: "{{ role_path }}/.venv"

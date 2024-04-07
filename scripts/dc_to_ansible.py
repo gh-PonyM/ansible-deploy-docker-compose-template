@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import subprocess
 from collections import defaultdict
@@ -7,6 +8,13 @@ from pathlib import Path
 import typing as t
 import click
 import yaml
+
+try:
+    from dc import ComposeSpecification, Service, Volume
+    from output_model import OutputModel
+except ModuleNotFoundError:
+    from .dc import ComposeSpecification, Service, Volume
+    from .output_model import OutputModel
 
 path_type = click.Path(path_type=Path, exists=True)
 secret_provider_choices = click.Choice(("passwordstore",))
@@ -29,11 +37,7 @@ def is_secret(
 
 
 def patch_port(port_line: str, new_key):
-    return re.sub("^\d+", new_key, port_line)
-
-
-linux_server_io_image_patt = re.compile(r"lscr.io/linuxserver/")
-linuxserver_io_env_defaults = {"TZ": "Europe/Zurich"}
+    return re.sub(r"^\d+", new_key, port_line)
 
 
 @click.command()
@@ -98,12 +102,14 @@ def main(
             yield str(f.resolve())
 
     def normalize_key_and_name(name: str):
-        return name.replace(" ", "_").replace("-", "_").lower()
+        return re.sub(r"[\s-]]", "_", name).lower()
 
     def variable_from_env(key):
         return f"{defaults_prefix}{normalize_key_and_name(key)}"
 
-    def variable_from_port(service_name: str, exposed_port: int, add_prefix: bool = True):
+    def variable_from_port(
+        service_name: str, exposed_port: int, add_prefix: bool = True
+    ):
         return f"{defaults_prefix if add_prefix else ''}host_port_{service_name}_{exposed_port}"
 
     yaml_config = subprocess.check_output(
@@ -123,6 +129,8 @@ def main(
     except JSONDecodeError:
         # see bug https://github.com/docker/compose/issues/11669
         yaml_data = yaml.safe_load(yaml_config)
+
+    model = ComposeSpecification.model_validate(yaml_data)
 
     bootstrap_data: dict = {
         "role_name": normalize_key_and_name(role_name),
@@ -144,6 +152,7 @@ def main(
         "volume_defaults": {},
         "images_tags": [],
         "external_proxy_net": ext_proxy_net,
+        "env_files": {},
     }
 
     services_by_env = defaultdict(list)
@@ -157,6 +166,25 @@ def main(
         )
         return secret_string_template.format(**context)
 
+    def file_name_id(path: str):
+        return normalize_key_and_name("_".join(Path(path).parts[-1].split(".")))
+
+    def env_to_dict(env_: list | t.Iterable[str]):
+        e = {}
+        for item in env_:
+            k, v = item.split("=", 1)
+            e[k] = v
+        return e
+
+    def env_from_file(p: Path) -> dict[str, str | int]:
+        def iterate():
+            for line in p.read_text(encoding="utf-8").splitlines():
+                if not line or line.startswith("#"):
+                    continue
+                yield line
+
+        return env_to_dict(iterate())
+
     def patch_image_tag(image: str, new_tag: str):
         splits = image.split(":")
         return ":".join((*splits[:-1], new_tag))
@@ -168,7 +196,13 @@ def main(
         secret_len = max((len(item["value"]), min_secret_length))
         return f"{{{{ lookup('community.general.passwordstore', '{item['secret_path']} create=true length={secret_len}') }}}}"
 
-    def add_to_defaults(key, val, service_name: str, is_secret: bool = False):
+    def add_to_defaults(
+        key,
+        val,
+        service_name: str,
+        is_secret: bool = False,
+        env_file: str | None = None,
+    ):
         if services_by_env.get(key):
             return
         normalized_key = variable_from_env(key)
@@ -182,61 +216,87 @@ def main(
         if is_secret:
             data["secret_path"] = get_secret_path(service_name, key)
             data["secret_expr"] = get_secret_expr(data)
+        if env_file:
+            data["env_file"] = env_file
+            bootstrap_data["env_files"][env_file] = file_name_id(env_file)
         bootstrap_data["defaults"].append(data)
         services_by_env[key].append(service_name)
 
-    def handle_secret_env_var(svc_name: str, key, value):
-        add_to_defaults(key, value, svc_name, is_secret=True)
+    def handle_secret_env_var(svc_name: str, key, value, env_file: str | None = None):
+        add_to_defaults(key, value, svc_name, is_secret=True, env_file=env_file)
 
-    def handle_env_var(svc_name: str, key, value):
-        add_to_defaults(key, value, svc_name, is_secret=False)
+    def handle_env_var(svc_name: str, key, value, env_file: str | None = None):
+        add_to_defaults(key, value, svc_name, is_secret=False, env_file=env_file)
 
-    def handle_svc_environment(name: str, service_data: dict):
-        env = service_data.get("environment")
+    def handle_svc_environment(name: str, svc: Service):
+        env = svc.environment
         if not env:
             return
-        for key, value in env.items():
+        for key, value in env.root.items():
             if is_secret(name, key, value):
                 handle_secret_env_var(name, key, value)
             else:
                 handle_env_var(name, key, value)
 
+    def handle_svc_env_file(name: str, path: str):
+        if path.startswith("/"):
+            p = Path(path)
+        else:
+            p = files[0].parent / path
+        p = p.resolve()
+        if not p.is_file():
+            return
+        try:
+            env = env_from_file(p)
+        except Exception:
+            logging.warning(f"Supposed env file {p} could not be parsed")
+            return
+        for key, value in env.items():
+            if is_secret(name, key, value):
+                handle_secret_env_var(name, key, value, path)
+            else:
+                handle_env_var(name, key, value, path)
+
     def handle_networks(networks_data: dict | None):
         if not networks_data:
             return
 
-    def handle_svc_ports(name: str, data):
-        if not data.get("ports"):
+    def handle_svc_ports(name: str, data: Service):
+        if not data.ports:
             return
-        for port in data["ports"]:
-            if port.get("published"):
-                host_port = int(port["published"])
-                bootstrap_data["exposed_ports_by_service"][name].append(host_port)
-                key = variable_from_port(name, host_port, add_prefix=False)
-                add_to_defaults(key, host_port, name)
+        for port in data.ports:
+            if not port.published:
+                continue
+            host_port = int(port.published)
+            bootstrap_data["exposed_ports_by_service"][name].append(host_port)
+            key = variable_from_port(name, host_port, add_prefix=False)
+            add_to_defaults(key, host_port, name)
 
-    def handle_svc_volumes(name: str, data, volumes: dict):
-        for vol in data.get("volumes", []):
-            if vol["type"] == "bind":
-                val = vol["source"]
+    def handle_svc_volumes(
+        name: str, data: Service, volumes: dict[str, Volume | None] | None
+    ):
+        for vol in data.volumes or []:
+            if vol.type == "bind":
+                val = vol.source
                 bootstrap_data["backup_paths"].append(val)
-                m = re.search("[\w._]+$", val)
+                handle_svc_env_file(name, path=val)
+                m = re.search(r"[\w._]+$", val)
                 vol_id = m.group(0) if m else "data"
                 vol_id = vol_id.replace(".", "_")
                 normalized_key = f"{defaults_prefix}{vol_id}_mount_dir"
                 volume_defaults[val] = normalized_key
 
-            elif vol["type"] == "volume":
+            elif vol.type == "volume":
                 # may add the default path for docker volumes
                 default_path = "/var/lib/docker/volumes"
-                vol_path = volumes[vol["source"]]["name"]
+                vol_path = volumes[vol.source].name
                 bootstrap_data["backup_paths"].append(f"{default_path}/{vol_path}")
 
     supported = ("mariadb", "postgres", "redis")
     db_search_patt = re.compile(rf"({'|'.join(supported)})")
 
-    def handle_service_image(name, service_data):
-        image = service_data["image"]
+    def handle_service_image(name, svc: Service):
+        image = svc.image
         m = db_search_patt.search(image)
         tag = image.split(":")[-1]
         data = {"service": name, "tag": tag}
@@ -257,12 +317,12 @@ def main(
             }
         )
 
-    def handle_services(data: dict):
-        for svc_name, service_data in data["services"].items():
-            handle_svc_environment(svc_name, service_data)
-            handle_svc_volumes(svc_name, service_data, data.get("volumes"))
-            handle_svc_ports(svc_name, service_data)
-            handle_service_image(svc_name, service_data)
+    def handle_services(model: ComposeSpecification):
+        for svc_name, svc in model.services.items():
+            handle_svc_environment(svc_name, svc)
+            handle_svc_volumes(svc_name, svc, model.volumes)
+            handle_svc_ports(svc_name, svc)
+            handle_service_image(svc_name, svc)
 
     def handle_proxy_container(compose_config: dict):
         if not proxy_container:
@@ -278,13 +338,6 @@ def main(
         )
         return compose_config
 
-    def env_to_dict(env_: list):
-        e = {}
-        for item in env_:
-            k, v = item.split("=", 1)
-            e[k] = v
-        return e
-
     def create_final_compose():
         """Creates the final modified docker-compose.yml file with secret string
         and external networks added. Uses the original compose file before running
@@ -299,7 +352,7 @@ def main(
                 lookup_var = variable_from_env(key)
                 final["services"][name]["environment"][key] = f"{{{{ {lookup_var} }}}}"
             for ix, vol in enumerate(data.get("volumes", [])):
-                val = yaml_data["services"][name]["volumes"][ix]["source"]
+                val = model.services[name].volumes[ix].source
                 # val = vol["source"]
                 if val in volume_defaults:
                     data["volumes"][ix] = data["volumes"][ix].replace(
@@ -325,17 +378,22 @@ def main(
         final = handle_proxy_container(final)
         bootstrap_data["final_compose"] = final
 
-    handle_networks(yaml_data.get("networks"))
-    handle_services(yaml_data)
+    handle_networks(model.networks)
+    handle_services(model)
     add_releases_to_defaults()
     create_final_compose()
     bootstrap_data["services_by_env"] = services_by_env
     bootstrap_data["volume_defaults"] = volume_defaults
     bootstrap_data["images_tags"] = images_tags
+    model = OutputModel.model_validate(bootstrap_data)
+
+    def dump():
+        return model.model_dump_json(indent=2, exclude_defaults=False)
+
     if out:
-        out.write_text(json.dumps(bootstrap_data, indent=2), encoding="utf-8")
+        out.write_text(dump(), encoding="utf-8")
     else:
-        click.secho(json.dumps(bootstrap_data, indent=2))
+        click.secho(dump())
 
 
 if __name__ == "__main__":
