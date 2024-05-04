@@ -101,9 +101,7 @@
     project_src: "{{ repository_src }}"
     state: absent
     files:
-[% for f in cli_output['compose_files'] %]
-      - [[ f | basename ]]
-[% endfor %]
+      - docker-compose.yml
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
   - compose_v1
@@ -117,9 +115,7 @@
     project_src: "{{ repository_src }}"
     state: absent
     files:
-[% for f in cli_output['compose_files'] %]
-      - [[ f | basename ]]
-[% endfor %]
+      - docker-compose.yml
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
   - not compose_v1
@@ -148,9 +144,7 @@
     state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
     build: false
     files:
-[% for f in cli_output['compose_files'] %]
-      - [[ f | basename ]]
-[% endfor %]
+      - docker-compose.yml
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
     - compose_v1
@@ -164,9 +158,7 @@
     state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
     build: never
     files:
-[% for f in cli_output['compose_files'] %]
-      - [[ f | basename ]]
-[% endfor %]
+      - docker-compose.yml
   become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
   when:
     - not compose_v1
