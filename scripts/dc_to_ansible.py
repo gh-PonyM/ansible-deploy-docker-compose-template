@@ -28,7 +28,7 @@ def is_secret(
     service_name, key, value, secret_seqs: t.Sequence[str] | None = None
 ) -> bool:
     """Determines the type of variables by key name. Add additional logic using the service name of needed"""
-    patt = re.compile("(password|secret|token|api_key|db_pass)$", flags=re.IGNORECASE)
+    patt = re.compile("(password|secret|token|api_key|db_pass|secret_key)$", flags=re.IGNORECASE)
     if patt.search(key):
         return True
     elif secret_seqs and re.search(rf"({'|'.join(secret_seqs)})", key):
