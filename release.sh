@@ -12,6 +12,7 @@ if [ "$CHANGES" -gt "0" ]; then
 fi
 
 poetry version $version
+sed -e "s/version: [0-9]\+\.[0-9]\+\.[0-9]\+/version: $version/g" README.md
 poetry export -n -o scripts/requirements.txt
 git add .
 git commit -m "$commit_msg"
