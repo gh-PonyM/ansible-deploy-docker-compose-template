@@ -36,6 +36,7 @@
    - defaults
    - tasks
    - templates
+   - handlers
 
 - name: call dc_to_ansible.py
   command:
@@ -63,7 +64,7 @@
     variable_start_string: '[['
     variable_end_string: ']]'
 
-- name: Render default and vars files
+- name: Render default and vars files and handlers
   template:
     src: "{{ item }}.yml"
     dest: "{{ output_role_path }}/{{ item }}/main.yml"
@@ -77,6 +78,7 @@
   loop:
     - vars
     - defaults
+    - handlers
 
 - name: Copy compose config content
   copy:

@@ -1,0 +1,10 @@
+---
+
+- name: Stop services due to config change
+  community.docker.docker_compose_v2:
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
+    project_src: "{{ repository_src }}"
+    state: absent
+    files:
+      - docker-compose.yml
+  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"

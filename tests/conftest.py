@@ -51,6 +51,14 @@ def temporary_directory():
     shutil.rmtree(directory)
 
 
+@pytest.fixture(scope="session")
+def output_dir():
+    out = Path(__file__).parent.parent / "generated"
+    if not out.is_dir():
+        out.mkdir()
+    return out
+
+
 @pytest.fixture()
 def runner(temporary_directory):
     with cd_to_directory(temporary_directory, env={}):

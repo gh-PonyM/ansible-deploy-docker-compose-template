@@ -15,14 +15,14 @@
 # remove the repository source directory
 [[ cli_output['defaults_prefix'] ]]remove: false
 
-
 # environment from files:
 [% for file in cli_output['compose_files'] %]
 # - [[ file | basename ]]
 [% endfor %]
 
 [% for svc, service_defaults in cli_output['defaults'] | groupby('service') %]
-# environment config for [[ svc ]] service
+# environment config [% if svc != 'None' %]for [[ svc ]] service[% endif %]
+
 [% for data in service_defaults %]
 [% if not data.is_secret %]
 [[ data.key ]]: [[ data.value ]]
@@ -61,8 +61,4 @@
 [[ cli_output['defaults_prefix'] ]]auto_update_cron_weekday: "0"
 [[ cli_output['defaults_prefix'] ]]auto_update_cron_month: "*"
 
-# removes previously installed python package docker and docker-compose
-remove_legacy_docker_python_deps: false
-# virtual env for python deps controlling docker
-docker_utils_venv_path: /opt/ansible_venvs/docker_venv
 compose_v1: false
