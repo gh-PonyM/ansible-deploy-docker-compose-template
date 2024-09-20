@@ -27,8 +27,8 @@
 [% endfor %]
 [% endif %]
     # ansible deploy defaults
-    [[ cli_output['defaults_prefix'] ]]user: [[ docker_user ]]
-    [[ cli_output['defaults_prefix'] ]]user_id: [[ docker_user_id ]]
+    docker_deployment_user: [[ docker_user ]]
+    docker_deployment_user_id: [[ docker_user_id ]]
     [[ cli_output['defaults_prefix'] ]]ext_net: [[ cli_output['external_proxy_net'] ]]
     [[ cli_output['defaults_prefix'] ]]project_name: [[ cli_output['role_name'] ]]
   roles:

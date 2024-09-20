@@ -1,6 +1,6 @@
 ---
 
-- name: legacy | ensure compose setup is stopped
+- name: legacy | Ensure compose setup is stopped
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output.defaults_prefix ]]project_name }}"
     project_src: "{{ repository_src }}"
@@ -9,7 +9,7 @@
   become_user: "{{ [[ cli_output.defaults_prefix ]]user }}"
   when: compose_v1
 
-- name: legacy | ensure compose setup is stopped
+- name: Ensure compose setup is stopped
   community.docker.docker_compose_v2:
     project_name: "{{ [[ cli_output.defaults_prefix ]]project_name }}"
     project_src: "{{ repository_src }}"

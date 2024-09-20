@@ -7,4 +7,18 @@
     state: absent
     files:
       - docker-compose.yml
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
+  when:
+    - not compose_v1
+
+- name: legacy | Stop services due to config change
+  community.docker.docker_compose:
+    project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
+    project_src: "{{ repository_src }}"
+    debug: true
+    state: absent
+    files:
+      - docker-compose.yml
+  become_user: "{{ docker_deployment_user }}"
+  when:
+    - compose_v1

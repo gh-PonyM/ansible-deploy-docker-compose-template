@@ -8,15 +8,15 @@
 
 - name: Ensure deployment user for [[ cli_output['role_name'] ]]
   user:
-    name: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    name: "{{ docker_deployment_user }}"
     state: "{{ [[ cli_output['defaults_prefix'] ]]state | default('present') }}"
     create_home: true
-    uid: "{{ [[ cli_output['defaults_prefix'] ]]user_id }}"
+    uid: "{{ docker_deployment_user_id }}"
     shell: /bin/bash
 
 - name: Ensure user is added to the docker group.
   user:
-    name: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    name: "{{ docker_deployment_user }}"
     groups: docker
     append: true
 
@@ -24,8 +24,8 @@
   file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
+    group: "{{ docker_deployment_user }}"
   become: true
   loop:
    - "{{ repository_src }}"
@@ -47,10 +47,12 @@
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
     mode: "600"
   check_mode: true
-  notify: Stop services due to config change
+  notify:
+    - Stop services due to config change
+    - legacy | Stop services due to config change
   when: compose.stat.exists
 
 - meta: flush_handlers
@@ -59,7 +61,7 @@
   template:
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
     mode: "600"
   register: repo_copy
 
@@ -69,22 +71,24 @@
 - name: Ensure parent folders for env files exists
   file:
     path: "{{ repository_src + '/' +  item | dirname }}"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
+    group: "{{ docker_deployment_user }}"
     state: directory
   loop: [[ cli_output.env_files | list | to_yaml ]]
 
 - name: Render env file [[ fn ]]
   copy:
     dest: "{{ repository_src }}/[[ fn ]]"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
+    group: "{{ docker_deployment_user }}"
     content: |
 [% for data in service_defaults %]
       [[ data.original_key ]]="{{ [[ data.key ]] }}"
 [% endfor %]
   register: [[ cli_output.env_files[fn] ]]
-  notify: Stop services due to config change
+  notify:
+    - Stop services due to config change
+    - legacy | Stop services due to config change
 
 [% endfor %]
 
@@ -95,7 +99,7 @@
 - name: Run pre-start commands
   command: "{{ item }}"
   loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
 
 - name: legacy | Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
@@ -106,7 +110,7 @@
     build: false
     files:
       - docker-compose.yml
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
   when:
     - compose_v1
 
@@ -119,14 +123,14 @@
     build: never
     files:
       - docker-compose.yml
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
   when:
     - not compose_v1
 
 - name: Run post-shutdown commands
   command: "{{ item }}"
   loop: "{{ [[ cli_output['defaults_prefix'] ]]post_shutdown_commands }}"
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
 
 - name: Put auto-update script
   copy:
@@ -139,8 +143,8 @@
       docker compose up -d
 
     dest: "{{ repository_src }}/autoupdate.sh"
-    owner: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
-    group: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    owner: "{{ docker_deployment_user }}"
+    group: "{{ docker_deployment_user }}"
     mode: "770"
   when: [[ cli_output['defaults_prefix'] ]]auto_update
 
@@ -152,8 +156,8 @@
     minute: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_minute }}"
     weekday: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_weekday }}"
     month: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_month }}"
-    user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+    user: "{{ docker_deployment_user }}"
     state: "{{ cron_state }}"
-  become_user: "{{ [[ cli_output['defaults_prefix'] ]]user }}"
+  become_user: "{{ docker_deployment_user }}"
   vars:
     cron_state: "{{ 'present' if [[ cli_output['defaults_prefix'] ]]auto_update else 'absent' }}"
