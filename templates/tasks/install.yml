@@ -95,9 +95,8 @@
 - meta: flush_handlers
 
 [%- endif %]
-
 - name: Run pre-start commands
-  command: "{{ item }}"
+  shell: "{{ item }}"
   loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
   become_user: "{{ docker_deployment_user }}"
 
@@ -128,7 +127,7 @@
     - not compose_v1
 
 - name: Run post-shutdown commands
-  command: "{{ item }}"
+  shell: "{{ item }}"
   loop: "{{ [[ cli_output['defaults_prefix'] ]]post_shutdown_commands }}"
   become_user: "{{ docker_deployment_user }}"
 
