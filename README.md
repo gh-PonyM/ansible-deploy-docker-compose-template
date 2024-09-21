@@ -12,8 +12,9 @@ script `dc_to_ansible.py` that extracts information from one compose file. **Thi
 
 - If any of the `docker-compose.yml` defaults have  `{{` in it, you have to override the ansible default with `!unsafe "{{ ..."`
 - The service names inside `docker-compose.yml` shall not use spaces or `-`. Always use `_` to be compatible with ansible variables
+- `env_file` support is limited. On `docker compose config`, the variables are merged with values in `environment`. Use the pre-startup commands to generate this env file
 
-**dc_to_ansible.py**
+## `dc_to_ansible.py`
 
 The cli can be used standalone and the generated json used for other things. Here is what it does:
 
@@ -25,6 +26,12 @@ The cli can be used standalone and the generated json used for other things. Her
 - Identifies all exposed ports of the setup (e.g. might be used for firewall rules config by ansible)
 - Identifies mounted volumes locally or docker volumes and extracts paths for eventual backup configs
 - Generates a final combined docker-compose config injecting external `proxy-tier` network if needed.
+
+### Environment to defaults conversion
+
+- All variables defined by `environment` are converted into role defaults
+- If a file is mounted from `compose_file_path`, it's checked if it can be read as an env file, and rendered as part of the role. See [minio example](tests/fixtures/minio.yml)
+- If an `env_file` is specified instead of `environment`, you have to create this file yourself via the pre-startup commands.
 
 The cli uses `click` and `PyYAML` as dependency, both of them should be available when ansible is installed. 
 Starting from version 1.2.0, the cli install its dependencies (`pydantic`) into the path `cli_virtualenv_path`, which by default `.venv` inside the role installation path.

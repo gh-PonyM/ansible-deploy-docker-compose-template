@@ -62,10 +62,10 @@
     src: "docker-compose.yml"
     dest: "{{ repository_src }}/docker-compose.yml"
     owner: "{{ docker_deployment_user }}"
+    group: "{{ docker_deployment_user }}"
     mode: "600"
-  register: repo_copy
 
-[% set env_from_file = cli_output.defaults | rejectattr('env_file', 'eq', None) | list -%]
+[%- set env_from_file = cli_output.defaults | rejectattr('env_file', 'eq', None) | list -%]
 [% if env_from_file %]
 [% for fn, service_defaults in env_from_file | groupby('env_file') %]
 - name: Ensure parent folders for env files exists
@@ -85,7 +85,6 @@
 [% for data in service_defaults %]
       [[ data.original_key ]]="{{ [[ data.key ]] }}"
 [% endfor %]
-  register: [[ cli_output.env_files[fn] ]]
   notify:
     - Stop services due to config change
     - legacy | Stop services due to config change
