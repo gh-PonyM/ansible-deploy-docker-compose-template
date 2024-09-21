@@ -49,8 +49,16 @@ docker_deployment_user_id: [[ docker_user_id ]]
 # pre-docker compose command using command module
 [[ cli_output['defaults_prefix'] ]]pre_startup_commands: []
 
-# post-docker down commands
-[[ cli_output['defaults_prefix'] ]]post_shutdown_commands: []
+# pre-docker startup script content
+[[ cli_output['defaults_prefix'] ]]pre_startup_script:
+[[ cli_output['defaults_prefix'] ]]pre_startup_script_remove: false
+
+# post-docker up commands
+[[ cli_output['defaults_prefix'] ]]post_startup_commands: []
+
+# post-docker script content
+[[ cli_output['defaults_prefix'] ]]post_startup_script:
+[[ cli_output['defaults_prefix'] ]]post_startup_script_remove: false
 
 # enable automatic updates for latest tag
 [[ cli_output['defaults_prefix'] ]]auto_update: false

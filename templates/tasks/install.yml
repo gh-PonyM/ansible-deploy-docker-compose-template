@@ -95,10 +95,14 @@
 - meta: flush_handlers
 
 [%- endif %]
-- name: Run pre-start commands
-  shell: "{{ item }}"
-  loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
-  become_user: "{{ docker_deployment_user }}"
+
+- include_tasks: run_cmds.yml
+  vars:
+    cmds: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
+    remove_script: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_script_remove }}"
+    script_content: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_script }}"
+    script_name: pre_startup.sh
+  when: "{{ [[ cli_output['defaults_prefix'] ]]state == 'present' }}"
 
 - name: legacy | Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
@@ -126,17 +130,20 @@
   when:
     - not compose_v1
 
-- name: Run post-shutdown commands
-  shell: "{{ item }}"
-  loop: "{{ [[ cli_output['defaults_prefix'] ]]post_shutdown_commands }}"
-  become_user: "{{ docker_deployment_user }}"
+- include_tasks: run_cmds.yml
+  vars:
+    cmds: "{{ [[ cli_output['defaults_prefix'] ]]post_startup_commands }}"
+    remove_script: "{{ [[ cli_output['defaults_prefix'] ]]post_startup_script_remove }}"
+    script_content: "{{ [[ cli_output['defaults_prefix'] ]]post_startup_script }}"
+    script_name: post_startup.sh
+  when: "{{ [[ cli_output['defaults_prefix'] ]]state == 'present' }}"
 
 - name: Put auto-update script
   copy:
     content: |
       #!/usr/bin/env bash
       
-      set - eu
+      set -eu
       cd {{ repository_src }}
       docker compose pull
       docker compose up -d

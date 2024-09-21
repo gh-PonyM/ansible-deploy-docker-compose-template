@@ -1,0 +1,37 @@
+---
+
+- name: Run commands
+  shell: "{{ item }}"
+  loop: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_commands }}"
+  become_user: "{{ docker_deployment_user }}"
+  when: not script_content
+
+- name: Execute {{ script_name }} script
+  block:
+    - name: Render {{ script_name }}
+      copy:
+        content: |
+          #!/usr/bin/env bash      
+          set -eu
+          {{ script_content }}
+        dest: "{{ repository_src }}/{{ script_name }}"
+        owner: "{{ docker_deployment_user }}"
+        group: "{{ docker_deployment_user }}"
+        mode: "770"
+
+    - name: Run {{ script_name }}
+      command: "{{ repository_src }}/{{ script_name }}"
+      become: true
+      become_user: "{{ docker_deployment_user }}"
+
+  when:
+    - script_content
+
+- name: Remove {{ script_name }}
+  file:
+    path: "{{ repository_src }}/{{ script_name }}"
+    state: absent
+  become: true
+  become_user: "{{ docker_deployment_user }}"
+  when:
+    - remove_script
