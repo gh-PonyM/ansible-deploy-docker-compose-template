@@ -332,11 +332,10 @@ def main(
         if not proxy_container:
             return compose_config
         compose_config.setdefault("networks", {})
-        compose_config["services"][proxy_container].setdefault("networks", {})
-        compose_config["services"][proxy_container]["networks"].setdefault(
-            ext_proxy_net, None
-        )
-        compose_config["services"][proxy_container]["networks"]["default"] = None
+        compose_config["services"][proxy_container].setdefault("networks", [])
+        compose_config["services"][proxy_container]["networks"].append(ext_proxy_net)
+        if len(compose_config["services"][proxy_container]["networks"]) == 1:
+            compose_config["services"][proxy_container]["networks"].append("default")
         compose_config["networks"].setdefault(
             ext_proxy_net, {"name": ext_proxy_net, "external": True}
         )
