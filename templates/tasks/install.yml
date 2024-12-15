@@ -122,7 +122,7 @@
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ repository_src }}"
     state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
-    build: never
+    recreate: always
     files:
       - docker-compose.yml
   become_user: "{{ docker_deployment_user }}"
