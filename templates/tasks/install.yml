@@ -64,10 +64,10 @@
     owner: "{{ docker_deployment_user }}"
     group: "{{ docker_deployment_user }}"
     mode: "600"
-
-[%- set env_from_file = cli_output.defaults | rejectattr('env_file', 'eq', None) | list -%]
+[% set env_from_file = cli_output.defaults | rejectattr('env_file', 'eq', None) | list -%]
 [% if env_from_file %]
 [% for fn, service_defaults in env_from_file | groupby('env_file') %]
+
 - name: Ensure parent folders for env files exists
   file:
     path: "{{ repository_src + '/' +  item | dirname }}"
