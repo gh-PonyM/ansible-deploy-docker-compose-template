@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.skipif(not shutil.which("ansible"), reason="ansible not installed")
-@pytest.mark.parametrize("compose", ("minio.yml", "wikijs.yml", "pihole.yml"))
+@pytest.mark.parametrize("compose", ("nginx-proxy-acme.yml", "minio.yml", "wikijs.yml", "pihole.yml"))
 def test_create_role(compose, fixture_path, output_dir):
     name = compose.rstrip(".yml")
     cmd = (

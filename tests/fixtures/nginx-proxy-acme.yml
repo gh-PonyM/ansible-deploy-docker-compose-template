@@ -1,0 +1,40 @@
+---
+
+services:
+  proxy:
+    image: nginxproxy/nginx-proxy:1.6
+    container_name: proxy
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - proxy_html:/usr/share/nginx/html
+    restart: unless-stopped
+    environment:
+      ACME_HTTP_CHALLENGE_LOCATION: true
+    networks:
+      - webnet
+    ports:
+      - "80:80"
+      - "443:443"
+
+  acme:
+    image: nginxproxy/acme-companion:2.5
+    environment:
+      DEFAULT_EMAIL: admin@example.org
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./acme:/etc/acme.sh
+    restart: unless-stopped
+    volumes_from:
+      - proxy
+    networks:
+      - webnet
+    depends_on:
+      - proxy
+
+networks:
+  webnet:
+    driver: bridge
+
+volumes:
+  proxy_html:
