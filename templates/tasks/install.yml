@@ -101,7 +101,7 @@
     remove_script: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_script_remove }}"
     script_content: "{{ [[ cli_output['defaults_prefix'] ]]pre_startup_script }}"
     script_name: pre_startup.sh
-  when: "{{ [[ cli_output['defaults_prefix'] ]]state == 'present' }}"
+  when: [[ cli_output['defaults_prefix'] ]]state == 'present'
 
 - name: legacy | Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
