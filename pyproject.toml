@@ -17,6 +17,7 @@ pyyaml = "^6.0.1"
 pytest = "^7.4.1"
 datamodel-code-generator = {extras = ["http"], version = "^0.25.5"}
 ansible = "^9.4.0"
+poetry-plugin-export = "^1.9.0"
 
 [tool.poetry.scripts]
 dc-to-ansible = "scripts.dc_to_ansible:main"
