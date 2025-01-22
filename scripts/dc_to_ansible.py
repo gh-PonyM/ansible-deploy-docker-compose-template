@@ -24,6 +24,17 @@ secret_provider_default = "passwordstore"
 default_min_secret_len = 12
 
 
+@contextlib.contextmanager
+def cd_to_directory(path: Path):
+    """Changes working directory and returns to previous on exit."""
+    prev_cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
+
+
 def is_secret(
     service_name, key, value, secret_seqs: t.Sequence[str] | None = None
 ) -> bool:
@@ -44,11 +55,9 @@ def patch_port(port_line: str, new_key):
 @click.option(
     "--file",
     "-f",
-    "files",
-    help="Docker compose files",
+    help="Docker compose file",
     type=path_type,
-    multiple=True,
-    default=(Path("docker-compose.yml"),),
+    default=Path("docker-compose.yml"),
 )
 @click.option(
     "--defaults-prefix", "-p", help="The prefix used for all defaults", prompt=True
@@ -84,7 +93,7 @@ def patch_port(port_line: str, new_key):
     "--uid", help="The users uid to use if user is defined on any service", type=int, required=False
 )
 def main(
-    files,
+    file,
     defaults_prefix,
     secret_provider,
     secret_string_template,
@@ -100,11 +109,6 @@ def main(
     if not defaults_prefix.endswith("_"):
         defaults_prefix = f"{defaults_prefix}_"
 
-    def _files():
-        for f in files:
-            yield "-f"
-            yield str(f.resolve())
-
     def normalize_key_and_name(name: str):
         return re.sub(r"[\s-]]", "_", name).lower()
 
@@ -116,18 +120,20 @@ def main(
     ):
         return f"{defaults_prefix if add_prefix else ''}host_port_{service_name}_{exposed_port}"
 
-    yaml_config = subprocess.check_output(
-        (
-            "docker",
-            "compose",
-            *_files(),
-            "config",
-            "--format",
-            "json",
-            "--no-path-resolution",
-        ),
-        encoding="utf-8",
-    )
+    with cd_to_directory(file.parent):
+        yaml_config = subprocess.check_output(
+            (
+                "docker",
+                "compose",
+                "-f",
+                str(file.resolve()),
+                "config",
+                "--format",
+                "json",
+                "--no-path-resolution",
+            ),
+            encoding="utf-8",
+        )
     try:
         yaml_data: dict = json.loads(yaml_config)
     except JSONDecodeError:
@@ -145,7 +151,7 @@ def main(
         "secret_provider": secret_provider,
         "defaults_prefix": defaults_prefix,
         "secret_string_template": secret_string_template,
-        "compose_files": [str(f.resolve()) for f in files],
+        "compose_files": [str(file.resolve())],
         "compose_config": yaml_data,
         "final_compose": {},
         "services_by_env": {},
@@ -246,7 +252,7 @@ def main(
         if path.startswith("/"):
             p = Path(path)
         else:
-            p = files[0].parent / path
+            p = file.parent / path
         p = p.resolve()
         if not p.is_file():
             return
@@ -345,7 +351,7 @@ def main(
         """Creates the final modified docker-compose.yml file with secret string
         and external networks added. Uses the original compose file before running
         `docker compose config` since this straps away the version of the files etc."""
-        final = yaml.safe_load(files[0].resolve().read_text(encoding="utf8"))
+        final = yaml.safe_load(file.resolve().read_text(encoding="utf8"))
         for name, data in final["services"].items():
             env_ = data.get("environment", {})
             if isinstance(env_, list):
