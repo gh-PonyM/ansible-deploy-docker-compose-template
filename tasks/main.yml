@@ -4,6 +4,12 @@
     msg: "This role is supposed to be run on an ansible controller using connection: local"
   when: ansible_connection != 'local'
 
+- fail:
+    msg: "The defaults prefix contains invalid characters such as - or spaces"
+  when: not match
+  vars:
+    match: "{{ ansible_defaults_prefix | regex_search('^[a-zA-Z0-9_]+$') }}"
+
 - setup:
   tags:
     - deps

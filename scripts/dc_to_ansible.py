@@ -56,6 +56,10 @@ def is_secret(
 def patch_port(port_line: str, new_key):
     return re.sub(r"^\d+", new_key, port_line)
 
+def validate_defaults_prefix(ctx, param, value):
+    if re.search(r"[\s-]", value):
+        raise click.BadParameter("Defaults prefix contains invalid characters")
+    return value
 
 @click.command()
 @click.option(
@@ -66,7 +70,8 @@ def patch_port(port_line: str, new_key):
     default=Path("docker-compose.yml"),
 )
 @click.option(
-    "--defaults-prefix", "-p", help="The prefix used for all defaults", prompt=True
+    "--defaults-prefix", "-p", help="The prefix used for all defaults", prompt=True,
+    type=click.UNPROCESSED, callback=validate_defaults_prefix
 )
 @click.option(
     "--secret-provider",

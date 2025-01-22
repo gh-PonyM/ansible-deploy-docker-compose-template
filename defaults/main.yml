@@ -22,9 +22,9 @@ project_role_name: "docker_{{ project_name }}"
 # If used inside an ansible repo, should default ansible cfs role_path
 out_roles_path: "{{ undef(hint='Provide the path the roles directory') }}"
 
-# prefix used for each environment config variable when transformed to an
+# prefix used for each environment config variable when transformed to a
 # role default, defaults to the project_name
-ansible_defaults_prefix: "{{ project_name }}"
+ansible_defaults_prefix: "{{ project_name | regex_replace('-', '_') }}"
 
 # which container should attach to a reverse proxy container network
 proxy_container_net_attach: null
