@@ -14,13 +14,13 @@
           #!/usr/bin/env bash      
           set -eu
           {{ script_content }}
-        dest: "{{ repository_src }}/{{ script_name }}"
+        dest: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/{{ script_name }}"
         owner: "{{ docker_deployment_user }}"
         group: "{{ docker_deployment_user }}"
         mode: "770"
 
     - name: Run {{ script_name }}
-      command: "{{ repository_src }}/{{ script_name }}"
+      command: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/{{ script_name }}"
       become: true
       become_user: "{{ docker_deployment_user }}"
 
@@ -29,7 +29,7 @@
 
 - name: Remove {{ script_name }}
   file:
-    path: "{{ repository_src }}/{{ script_name }}"
+    path: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/{{ script_name }}"
     state: absent
   become: true
   become_user: "{{ docker_deployment_user }}"

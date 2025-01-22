@@ -28,8 +28,8 @@
     group: "{{ docker_deployment_user }}"
   become: true
   loop:
-   - "{{ repository_src }}"
-   - "{{ repository_src }}/scripts"
+   - "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
+   - "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/scripts"
 
 - name: Ensure external network exists
   community.docker.docker_network:
@@ -40,13 +40,13 @@
 
 - name: Check if docker-compose.yml exists
   stat:
-    path: "{{ repository_src }}/docker-compose.yml"
+    path: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/docker-compose.yml"
   register: compose
 
 - name: test docker-compose changed
   template:
     src: "docker-compose.yml"
-    dest: "{{ repository_src }}/docker-compose.yml"
+    dest: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/docker-compose.yml"
     owner: "{{ docker_deployment_user }}"
     mode: "600"
   check_mode: true
@@ -60,7 +60,7 @@
 - name: Copy docker-compose.yml
   template:
     src: "docker-compose.yml"
-    dest: "{{ repository_src }}/docker-compose.yml"
+    dest: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/docker-compose.yml"
     owner: "{{ docker_deployment_user }}"
     group: "{{ docker_deployment_user }}"
     mode: "600"
@@ -70,7 +70,7 @@
 
 - name: Ensure parent folders for env files exists
   file:
-    path: "{{ repository_src + '/' +  item | dirname }}"
+    path: "{{ [[ cli_output['defaults_prefix'] ]]repository_src + '/' +  item | dirname }}"
     owner: "{{ docker_deployment_user }}"
     group: "{{ docker_deployment_user }}"
     state: directory
@@ -78,7 +78,7 @@
 
 - name: Render env file [[ fn ]]
   copy:
-    dest: "{{ repository_src }}/[[ fn ]]"
+    dest: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/[[ fn ]]"
     owner: "{{ docker_deployment_user }}"
     group: "{{ docker_deployment_user }}"
     content: |
@@ -106,7 +106,7 @@
 - name: legacy | Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     debug: true
     state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
     build: false
@@ -120,7 +120,7 @@
 - name: Ensure services are {{ [[ cli_output['defaults_prefix'] ]]state }}
   community.docker.docker_compose_v2:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     state: "{{ [[ cli_output['defaults_prefix'] ]]state }}"
     files:
       - docker-compose.yml
@@ -142,11 +142,11 @@
       #!/usr/bin/env bash
       
       set -eu
-      cd {{ repository_src }}
+      cd {{ [[ cli_output['defaults_prefix'] ]]repository_src }}
       docker compose pull
       docker compose up -d
 
-    dest: "{{ repository_src }}/autoupdate.sh"
+    dest: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/autoupdate.sh"
     owner: "{{ docker_deployment_user }}"
     group: "{{ docker_deployment_user }}"
     mode: "770"
@@ -155,7 +155,7 @@
 - name: Set auto-update cron to {{ cron_state }}
   cron:
     name: update all services for [[ cli_output['role_name'] ]]
-    job: "{{ repository_src }}/autoupdate.sh"
+    job: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/autoupdate.sh"
     hour: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_hour }}"
     minute: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_minute }}"
     weekday: "{{ [[ cli_output['defaults_prefix'] ]]auto_update_cron_weekday }}"

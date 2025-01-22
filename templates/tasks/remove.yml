@@ -3,7 +3,7 @@
 - name: legacy | Ensure compose setup is stopped
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output.defaults_prefix ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     debug: true
     state: absent
   become_user: "{{ [[ cli_output.defaults_prefix ]]user }}"
@@ -12,13 +12,13 @@
 - name: Ensure compose setup is stopped
   community.docker.docker_compose_v2:
     project_name: "{{ [[ cli_output.defaults_prefix ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     state: absent
   become_user: "{{ [[ cli_output.defaults_prefix ]]user }}"
   when: not compose_v1
 
 - name: Ensure repository path is absent
   file:
-    path: "{{ repository_src }}"
+    path: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     state: absent
   become: true

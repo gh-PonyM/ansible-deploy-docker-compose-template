@@ -3,7 +3,7 @@
 - name: Stop services due to config change
   community.docker.docker_compose_v2:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     state: absent
     files:
       - docker-compose.yml
@@ -14,7 +14,7 @@
 - name: legacy | Stop services due to config change
   community.docker.docker_compose:
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
-    project_src: "{{ repository_src }}"
+    project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     debug: true
     state: absent
     files:
