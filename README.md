@@ -88,4 +88,4 @@ Add the role to **requirements.yml** using `ansible-galaxy install -r requiremen
     roles:
     - src: git@gitlab.com:lksch-group/deploy-docker-compose-template.git
       scm: git
-      version: 1.3.1
+      version: 1.3.2
