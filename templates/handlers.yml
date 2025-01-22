@@ -10,6 +10,8 @@
   become_user: "{{ docker_deployment_user }}"
   when:
     - not compose_v1
+  listen:
+    - [[ cli_output['defaults_prefix'] ]]service_stop
 
 - name: legacy | Stop services due to config change
   community.docker.docker_compose:
@@ -22,3 +24,5 @@
   become_user: "{{ docker_deployment_user }}"
   when:
     - compose_v1
+  listen:
+    - [[ cli_output['defaults_prefix'] ]]service_stop

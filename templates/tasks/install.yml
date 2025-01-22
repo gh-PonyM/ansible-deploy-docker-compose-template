@@ -50,9 +50,7 @@
     owner: "{{ docker_deployment_user }}"
     mode: "600"
   check_mode: true
-  notify:
-    - Stop services due to config change
-    - legacy | Stop services due to config change
+  notify: [[ cli_output['defaults_prefix'] ]]service_stop
   when: compose.stat.exists
 
 - meta: flush_handlers
@@ -85,9 +83,7 @@
 [% for data in service_defaults %]
       [[ data.original_key ]]="{{ [[ data.key ]] }}"
 [% endfor %]
-  notify:
-    - Stop services due to config change
-    - legacy | Stop services due to config change
+  notify: [[ cli_output['defaults_prefix'] ]]service_stop
 
 [% endfor %]
 
