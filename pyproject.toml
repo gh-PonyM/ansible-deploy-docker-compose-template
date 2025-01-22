@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dc-to-ansible"
-version = "1.3.2"
+version = "1.3.12"
 description = ""
 authors = ["PonyM <dev@lksch.ch>"]
 license = "MIT"

@@ -11,8 +11,6 @@ import typing as t
 import click
 import yaml
 
-from tests.conftest import cd_to_directory
-
 try:
     from dc import ComposeSpecification, Service, Volume
     from output_model import OutputModel
