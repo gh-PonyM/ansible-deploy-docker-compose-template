@@ -109,7 +109,7 @@ def test_doco_pihole(runner, fixture_path):
     assert find_in(defaults, "key", f"{def_prefix}host_port_pihole_53")
 
 
-def test_env_from_file(fixture_path, runner):
+def test_env_from_file_from_env_key(fixture_path, runner):
     file = fixture_path / "minio.yml"
     def_prefix = "minio_"
     role_name = "minio"
@@ -136,5 +136,39 @@ def test_env_from_file(fixture_path, runner):
     # test defaults
     defaults_ = data["defaults"]
     vol = find_in(defaults_, "original_key", "MINIO_VOLUMES")
-    assert vol["env_file"]
+    assert vol["env_file"] == "./config/minio.env"
     assert data["final_compose"]["services"]["minio"]["user"] == f"{uid}:{uid}"
+
+
+def test_env_from_file(fixture_path, runner):
+    file = fixture_path / "wg-easy.yml"
+    def_prefix = "wg_"
+    role_name = "wireguard"
+    uid = "999"
+    r = runner.invoke(
+        main,
+        [
+            "--file",
+            str(file.resolve()),
+            "--defaults-prefix",
+            def_prefix,
+            "--role-name",
+            role_name,
+            "--proxy-container",
+            "wg",
+            "--uid",
+            uid
+        ],
+    )
+    assert r.exit_code == 0
+    json_raw = r.stdout
+    data = json.loads(json_raw)
+    # test defaults
+    defaults_ = data["defaults"]
+    vol = find_in(defaults_, "original_key", "PASSWORD_HASH")
+    assert vol["env_file"] == "./wg_easy_env", "ansible must template this file"
+
+    wg_service = data["final_compose"]["services"]["wg"]
+    assert wg_service["env_file"], "cli should not remove the env_file key"
+    assert not wg_service["environment"].get("PASSWORD_HASH"), \
+        "defaults should have been removed and not taken from docker compose config"

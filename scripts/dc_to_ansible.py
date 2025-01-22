@@ -1,5 +1,7 @@
+import contextlib
 import json
 import logging
+import os
 import re
 import subprocess
 from collections import defaultdict
@@ -8,6 +10,8 @@ from pathlib import Path
 import typing as t
 import click
 import yaml
+
+from tests.conftest import cd_to_directory
 
 try:
     from dc import ComposeSpecification, Service, Volume
@@ -19,6 +23,8 @@ except ModuleNotFoundError:
 path_type = click.Path(path_type=Path, exists=True)
 secret_provider_choices = click.Choice(("passwordstore",))
 secret_provider_default = "passwordstore"
+file_docker_file_mount_identifier: str = "# deploy-docker-compose-template::type"
+file_type_env = f"{file_docker_file_mount_identifier}::env"
 
 
 default_min_secret_len = 12
@@ -141,6 +147,8 @@ def main(
         yaml_data = yaml.safe_load(yaml_config)
 
     model = ComposeSpecification.model_validate(yaml_data)
+    final = yaml.safe_load(file.read_text(encoding="utf-8"))
+    og_model = ComposeSpecification.model_validate(final)
 
     bootstrap_data: dict = {
         "role_name": normalize_key_and_name(role_name),
@@ -179,16 +187,23 @@ def main(
     def file_name_id(path: str):
         return normalize_key_and_name("_".join(Path(path).parts[-1].split(".")))
 
-    def env_to_dict(env_: list | t.Iterable[str]):
+    def env_to_dict(env_: list | t.Iterable[str]) -> dict:
         e = {}
         for item in env_:
             k, v = item.split("=", 1)
             e[k] = v
         return e
 
-    def env_from_file(p: Path) -> dict[str, str | int]:
+    def env_from_file(p: Path, compose_env_file: bool = False) -> dict[str, str | int]:
+        """Parses the env file and returns a dictionary of key value pairs
+        For regular files: requires a line on top of the file
+        For service.env_file files: set compose_env_file to True
+        """
         def iterate():
-            for line in p.read_text(encoding="utf-8").splitlines():
+            for ix, line in enumerate(p.read_text(encoding="utf-8").splitlines()):
+                if not compose_env_file and ix == 0 and not line.startswith(file_type_env):
+                    # The user actually has to provide the file outside the logic of the role
+                    break
                 if not line or line.startswith("#"):
                     continue
                 yield line
@@ -242,13 +257,24 @@ def main(
         env = svc.environment
         if not env:
             return
+        env_file: str | list[str] = final["services"][name].get("env_file")
+        names_to_env_files = {}
+        if env_file:
+            env_f_list =  [env_file] if isinstance(env_file, str) else env_file
+            for ix, fp in enumerate(resolve_env_files(env_f_list)):
+                file_env_data = env_from_file(fp, compose_env_file=True)
+                names_to_env_files.update({k: env_f_list[ix] for k in file_env_data})
+        # includes all env vars, also from env_file
         for key, value in env.root.items():
             if is_secret(name, key, value):
-                handle_secret_env_var(name, key, value)
+                handle_secret_env_var(name, key, value, env_file=names_to_env_files.get(key))
             else:
-                handle_env_var(name, key, value)
+                handle_env_var(name, key, value, env_file=names_to_env_files.get(key))
 
     def handle_svc_env_file(name: str, path: str):
+        """Takes every value scans for local files mounted as source into the container and extracts env vars from it.
+        This is for the case where an env specifies the inner path to a config whereas ansible defaults contain these env vars
+        in order to template this file to be mounted inside the docker container"""
         if path.startswith("/"):
             p = Path(path)
         else:
@@ -347,19 +373,26 @@ def main(
         )
         return compose_config
 
-    def create_final_compose():
+    def resolve_env_files(file_list):
+        for f in file_list:
+            if f.startswith("/"):
+                p = Path(f)
+            else:
+                p = file.parent / f
+            yield p
+
+    def create_final_compose(final_compose: dict):
         """Creates the final modified docker-compose.yml file with secret string
         and external networks added. Uses the original compose file before running
         `docker compose config` since this straps away the version of the files etc."""
-        final = yaml.safe_load(file.resolve().read_text(encoding="utf8"))
-        for name, data in final["services"].items():
+        for name, data in final_compose["services"].items():
             env_ = data.get("environment", {})
             if isinstance(env_, list):
                 env_ = env_to_dict(env_)
-                final["services"][name]["environment"] = env_
+                final_compose["services"][name]["environment"] = env_
             for key, val in env_.items():
                 lookup_var = variable_from_env(key)
-                final["services"][name]["environment"][key] = f"{{{{ {lookup_var} }}}}"
+                final_compose["services"][name]["environment"][key] = f"{{{{ {lookup_var} }}}}"
             for ix, vol in enumerate(data.get("volumes", [])):
                 val = model.services[name].volumes[ix].source
                 # val = vol["source"]
@@ -386,13 +419,14 @@ def main(
             if uid and data.get("user"):
                 data["user"] = re.sub(r"\d+", str(uid), data["user"])
 
-        final = handle_proxy_container(final)
+        final_compose = handle_proxy_container(final)
         bootstrap_data["final_compose"] = final
+        return final_compose
 
     handle_networks(model.networks)
     handle_services(model)
     add_releases_to_defaults()
-    create_final_compose()
+    create_final_compose(final)
     bootstrap_data["services_by_env"] = services_by_env
     bootstrap_data["volume_defaults"] = volume_defaults
     bootstrap_data["images_tags"] = images_tags
