@@ -31,13 +31,14 @@
    - "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
    - "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/scripts"
 
+[% if proxy_container_net_attach %]
 - name: Ensure external network exists
   community.docker.docker_network:
     name: "{{ [[ cli_output['defaults_prefix'] ]]ext_net }}"
     driver: bridge
     attachable: true
     state: present
-
+[% endif %]
 - name: Check if docker-compose.yml exists
   stat:
     path: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}/docker-compose.yml"
