@@ -748,7 +748,7 @@ def run(
                 "docker",
                 "compose",
                 "-f",
-                str(file.resolve()),
+                file.name,
                 "config",
                 "--format",
                 "json",
@@ -1062,18 +1062,29 @@ def run(
         return model
 
 
+def resolve_docker_compose_path(answer: str, target_dir: Path) -> Path:
+    if answer.startswith("/"):
+        file = Path(answer)
+    else:
+        file = target_dir / answer
+    if not file.is_file():
+        raise FileNotFoundError(f"File {file.resolve()} does not exist")
+    return file
+
+
 class ContextUpdater(ContextHook):
     def hook(self, context) -> None:
         answers = context["_copier_answers"]
+        dest = context["_copier_conf"]["dst_path"]
         cli_data_model = run(
-            file=Path(answers["compose_file_path"]),
+            file=resolve_docker_compose_path(answers["compose_file_path"], dest),
             defaults_prefix=answers["ansible_defaults_prefix"],
             role_name=answers["role_name"],
             uid=answers["docker_user_id"],
             secret_provider=answers["secret_provider"],
             secret_string_template=answers["secret_string_template"],
             min_secret_length=answers["min_secret_length"],
-            ext_proxy_net=answers["ext_proxy_net"],
+            ext_proxy_net=answers.get("ext_proxy_net", context["ext_proxy_net"]),
         )
         context["cli_output"] = cli_data_model.model_dump(
             mode="json", exclude_defaults=False
