@@ -7,7 +7,9 @@ galaxy_info:
   company: [[ user_company ]]
   license: [[ license ]]
   min_ansible_version: "[[ min_ansible_version ]]"
+[% if galaxy_tags %]
   galaxy_tags:
 [% for tag in galaxy_tags %]
     - [[ tag ]]
 [% endfor %]
+[% endif %]
