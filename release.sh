@@ -15,9 +15,7 @@ check-git-dirty() {
 
 check-git-dirty
 poetry version $version
-sed -i -e "s/version: [0-9]\+\.[0-9]\+\.[0-9]\+/version: $version/g" README.md
-poetry export -n -o scripts/requirements.txt
-git add .
+git add pyproject.toml
 git commit -m "$commit_msg"
 git tag $version
 git push origin && git push origin --tags
