@@ -3,6 +3,13 @@
 Makes converting a docker-compose.yml setup into an ansible role faster. The templates works in conjunction with the 
 script `dc_to_ansible.py` that extracts information from one compose file. **This role is meant to be used on an ansible controller machine with `connection: local`**.
 
+## Requirements
+
+To bootstrap the template, `copier` tools is used alongside custom jinja extensions:
+
+    pipx install copier
+    pipx inject copier copier-templates-extensions
+
 ## Docker compose versions
 
 - As of version 2.18.0, docker compose v2 module can be used. This requires `python-docker` package and `docker-compose-plugin` apt packages to be installed.

@@ -5,8 +5,6 @@
     project_name: "{{ [[ cli_output['defaults_prefix'] ]]project_name }}"
     project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     state: absent
-    files:
-      - docker-compose.yml
   become_user: "{{ docker_deployment_user }}"
   when:
     - not compose_v1
@@ -19,8 +17,6 @@
     project_src: "{{ [[ cli_output['defaults_prefix'] ]]repository_src }}"
     debug: true
     state: absent
-    files:
-      - docker-compose.yml
   become_user: "{{ docker_deployment_user }}"
   when:
     - compose_v1

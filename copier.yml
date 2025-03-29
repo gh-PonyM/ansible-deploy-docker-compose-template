@@ -1,5 +1,8 @@
 _templates_suffix: .j2
 _subdirectory: templates
+_jinja_extensions:
+  - copier_templates_extensions.TemplateExtensionLoader
+  - extensions/dc_to_ansible.py:ContextUpdater
 _envops:
   block_start_string: '[%'
   block_end_string: '%]'
@@ -40,7 +43,7 @@ galaxy_author:
 galaxy_tags:
   type: str
   multiselect: true
-  default: []
+  default: ["docker-compose", "docker"]
 min_ansible_version:
   type: str
   default: 2.10
@@ -99,6 +102,17 @@ min_secret_length:
   type: int
   default: 17
   help: Minimum length for secrets to be created by the secret provider
+
+secret_provider:
+  type: str
+  default: passwordstore
+  choices: ["passwordstore"]
+  help: "The secret provider that is transformed to a lookup expression for example playbooks"
+
+secret_string_template:
+    type: str
+    default: "services/{role_name}/{service_name}/{env_key}"
+    help: String that is formatted using .format.
 
 remove_cli_artefact:
   type: bool
