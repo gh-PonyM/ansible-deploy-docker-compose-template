@@ -1074,10 +1074,6 @@ def run(
 class ContextUpdater(ContextHook):
     def hook(self, context) -> None:
         answers = context["_copier_answers"]
-        # print(set(k for k in context.keys() if k.startswith("_")))
-        dest_path = context["_copier_conf"]["dst_path"]
-        cli_out_name = "cli_out.json"
-        cli_out = dest_path / cli_out_name
         cli_data_model = run(
             file=Path(answers["compose_file_path"]),
             defaults_prefix=answers["ansible_defaults_prefix"],
@@ -1091,8 +1087,3 @@ class ContextUpdater(ContextHook):
         context["cli_output"] = cli_data_model.model_dump(
             mode="json", exclude_defaults=False
         )
-        if not answers["remove_cli_artefact"] and not cli_out.is_file():
-            pass
-            # print(f"Writing to {cli_out}")
-            # assert cli_out.parent.resolve().is_dir(), cli_out.parent.resolve()
-            # cli_out.write_text(cli_data_model.dump(), encoding="utf-8")
