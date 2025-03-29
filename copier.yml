@@ -1,0 +1,117 @@
+_templates_suffix: .j2
+_subdirectory: templates
+_envops:
+  block_start_string: '[%'
+  block_end_string: '%]'
+  variable_start_string: '[['
+  variable_end_string: ']]'
+  trim_blocks: true
+#  keep_trailing_newline: true
+
+github_user:
+  type: str
+  default: john
+user_name:
+  type: str
+  default: John Doe
+user_email:
+  type: str
+  default: john@doe.com
+user_company:
+  type: str
+  default: ""
+license:
+  type: str
+  choices:
+  - MIT license
+  - BSD license
+  - ISC license
+  - Apache Software License 2.0
+  - GNU General Public License v3
+  - GNU Lesser General Public License v3
+  default: MIT license
+
+galaxy_role_namespace:
+  type: str
+  default: "[[ github_user ]]"
+galaxy_author:
+  type: str
+  default: "[[ user_name ]]"
+galaxy_tags:
+  type: str
+  multiselect: true
+  default: []
+min_ansible_version:
+  type: str
+  default: 2.10
+
+docker_user:
+  type: str
+  default: dockerusr
+  help: The default user name for the generated role that owns the files and is inside the docker group
+
+docker_user_id:
+  type: int
+  default: 1002
+  help: The user id of the docker_user to make sure it is the same on all servers
+
+# currently only one compose file at a time is supported
+compose_file_path:
+  type: str
+  default: docker-compose.yml
+  help: Path to the compose file to convert
+
+project_name:
+  type: str
+  default: "[[ compose_file_path | dirname | basename ]]"
+  help: |
+    project name, defaults to the parent folder name where the compose file was found.
+
+role_name:
+  type: str
+  default: "docker_[[ project_name ]]"
+  validator: '[% if not (role_name | regex_search(''^[a-z][_a-zA-Z]+$'')) %]role_name
+    is limited to lowercase word characters (i.e., a-z, 0-9) and ‘_’.[% endif %]'
+  help: The name of the role to be created
+
+project_description:
+  type: str
+  default: "Generated ansible role docker using docker compose for [[ project_name ]]"
+
+# prefix used for each environment config variable when transformed to a
+# role default, defaults to the project_name
+ansible_defaults_prefix:
+  type: str
+  default: "[[ project_name | regex_replace('-', '_') ]]_"
+  help: Prefix to use for this roles defaults to scope the variables. Also include _ inside the prefix
+
+proxy_container_net_attach:
+  default: ""
+  type: str
+  help: Optional ocker compose service name inside the compose file that should be attached to a reverse proxy container network. Leave empty if this is not needed.
+
+ext_proxy_net:
+  type: str
+  default: proxy-tier
+  help: Name of the external proxy net network
+
+min_secret_length:
+  type: int
+  default: 17
+  help: Minimum length for secrets to be created by the secret provider
+
+remove_cli_artefact:
+  type: bool
+  default: true
+  help: Whether to remove the cli json output used for project generation can be checked into git if desired
+
+molecule_distros:
+  type: str
+  choices: ["ubuntu2204", "ubuntu2004", "ubuntu2404", "debian11", "debian12"]
+  default: ["ubuntu2204", "debian12"]
+  multiselect: true
+
+molecule_docker_test:
+  type: bool
+  default: true
+  help: Add molecule test files using docker provider

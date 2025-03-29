@@ -1,11 +1,11 @@
 ---
-- name: Converge
+- name: Prepare
   hosts: all
   gather_facts: true
   become: true
-  vars:
-    docker_users:
-      - [[ docker_user ]]
+  vars_files:
+    - "{{ playbook_dir }}/vars.yml"
+
   pre_tasks:
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=600
@@ -29,4 +29,3 @@
 
   roles:
     - role: geerlingguy.docker
-    - role: [[ project_role_name ]]

@@ -3,12 +3,12 @@ role_name_check: 1
 dependency:
   name: galaxy
   options:
-    role-file: requirements.yml
+    roles-path: molecule/defaults/roles
 driver:
   name: docker
 platforms:
-  - name: "instance-${MOLECULE_DISTRO:-ubuntu2204}"
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2204}-ansible:latest"
+  - name: "instance-${MOLECULE_DISTRO:-ubuntu2204}-[[ project_name ]]"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-[[ molecule_distros[0] ]]}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw

@@ -1,0 +1,10 @@
+---
+collections:
+#  - name: community.docker
+
+roles:
+    - name: geerlingguy.docker
+# role hosted as git repo using releases or branches as version
+#  - src: git@gitlab.com:user/httpd.git
+#    scm: git
+#    version: main

@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  become: true
+  vars_files:
+  - "{{ playbook_dir }}/vars.yml"
+  roles:
+    - role: [[ role_name ]]
