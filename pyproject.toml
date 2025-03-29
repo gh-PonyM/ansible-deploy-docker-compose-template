@@ -26,4 +26,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-include = ["extensions", "tests"]
+include = ["extensions/*.py", "tests/**/*.py"]
