@@ -12,6 +12,6 @@ Extracted from the original `docker-compose.yml` including environment configura
 
 | Variable | default  | ENV | used by | is secret |
 | -------- |----------|-----| ------- |-----------|
-[% for def in cli_output.defaults  %]
+[% for def in cli_output.defaults | sort(attribute='key') %]
 | `[[ def.key ]]` | [[ def.value ]] | `[[ def.original_key | default('') ]]` | [[ def.service ]] | [[ def.is_secret ]] |
 [% endfor %]
