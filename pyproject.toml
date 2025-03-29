@@ -18,6 +18,8 @@ pytest = "^7.4.1"
 datamodel-code-generator = {extras = ["http"], version = "^0.25.5"}
 ansible = "^9.4.0"
 poetry-plugin-export = "^1.9.0"
+copier = "^9.6.0"
+pytest-copie = "^0.2.1"
 
 [tool.poetry.scripts]
 dc-to-ansible = "scripts.dc_to_ansible:main"

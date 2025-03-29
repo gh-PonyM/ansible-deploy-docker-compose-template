@@ -1,23 +1,23 @@
 import shutil
-import subprocess
+from pathlib import Path
 
 import pytest
 
 
-@pytest.mark.skipif(not shutil.which("ansible"), reason="ansible not installed")
-@pytest.mark.parametrize("compose", ("wg-easy.yml","nginx-proxy-acme.yml", "minio.yml", "wikijs.yml", "pihole.yml"))
-def test_create_role(compose, fixture_path, output_dir):
-    name = compose.rstrip(".yml")
-    cmd = (
-        "ansible-playbook",
-        "tests/test_pb.yml",
-        "-e",
-        f"out_roles_path={output_dir}",
-        "-e",
-        f"compose_file_path={fixture_path / compose}",
-        "-e",
-        f"project_name={name}"
-    )
-    r = subprocess.run(cmd, encoding="utf-8", check=False, capture_output=True)
-    print(r.stdout)
-    assert r.returncode == 0
+@pytest.mark.parametrize("compose", ("wg-easy.yml", "nginx-proxy-acme.yml", "minio.yml", "wikijs.yml", "pihole.yml"))
+def test_create_role(compose, fixture_path, output_dir, copie):
+    name = compose.replace(".yml", "")
+    compose_p = fixture_path / compose
+    dst_path = output_dir / name
+    if dst_path.is_dir():
+        shutil.rmtree(dst_path)
+    dst_path.mkdir()
+    copie.test_dir = dst_path
+    ctx = {
+        "project_name": name,
+        "compose_file_path": str(compose_p.resolve()),
+        "remove_cli_artefact": False
+    }
+    result = copie.copy(template_dir=Path("."), extra_answers=ctx)
+    assert not result.exception
+    assert False
