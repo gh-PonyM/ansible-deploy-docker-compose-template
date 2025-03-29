@@ -11,7 +11,6 @@ from functools import lru_cache
 from json import JSONDecodeError
 from pathlib import Path
 import typing as t
-import click
 import yaml
 from copier_templates_extensions import ContextHook
 
@@ -678,8 +677,6 @@ class ComposeSpecification(BaseModel):
     configs: Dict[constr(pattern=r"^[a-zA-Z0-9._-]+$"), Config] | None = None
 
 
-path_type = click.Path(path_type=Path, exists=True)
-secret_provider_choices = click.Choice(("passwordstore",))
 secret_provider_default = "passwordstore"
 file_docker_file_mount_identifier: str = "# deploy-docker-compose-template::type"
 file_type_env = f"{file_docker_file_mount_identifier}::env"
@@ -714,12 +711,6 @@ def is_secret(
 
 def patch_port(port_line: str, new_key):
     return re.sub(r"^\d+", new_key, port_line)
-
-
-def validate_defaults_prefix(ctx, param, value):
-    if re.search(r"[\s-]", value):
-        raise click.BadParameter("Defaults prefix contains invalid characters")
-    return value
 
 
 @lru_cache
