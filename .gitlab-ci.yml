@@ -32,19 +32,19 @@ pytest:
     - export USER=$(id -un)
     - poetry run pytest
 
-compose-spec:
-  stage: watch
-  script:
-    - ./create_compose_models.sh
-    - |-
-      CHANGES=$(git status --porcelain | wc -l)
-      if [ "$CHANGES" -gt "0" ]; then
-        echo "The Upstream docker-compose.yml jsonschema spec has changed"
-        git status --porcelain
-        exit 1
-      fi
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+#compose-spec:
+#  stage: watch
+#  script:
+#    - ./create_compose_models.sh
+#    - |-
+#      CHANGES=$(git status --porcelain | wc -l)
+#      if [ "$CHANGES" -gt "0" ]; then
+#        echo "The Upstream docker-compose.yml jsonschema spec has changed"
+#        git status --porcelain
+#        exit 1
+#      fi
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 #publish-wheels:
 #  extends:

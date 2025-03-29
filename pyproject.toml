@@ -5,7 +5,7 @@ description = ""
 authors = ["PonyM <dev@lksch.ch>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "scripts"}]
+packages = [{include = "extensions/dc_to_ansible.py"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
