@@ -44,15 +44,17 @@ license:
   when: "[[ standalone_role ]]"
 galaxy_role_namespace:
   type: str
-  default: "[[ github_user ]]"
+  default: "[[ github_user.replace('-', '_').lower() ]]"
   when: "[[ standalone_role ]]"
+  validate: '[% if not (galaxy_role_namespace | regex_search(''^[a-z][a-z0-9_-]+$'')) %]galaxy_role_namespace
+    is limited to lowercase word characters (i.e., a-z, 0-9) and ‘_’.[% endif %]'
 galaxy_author:
   type: str
   default: "[[ user_name ]]"
   when: "[[ standalone_role ]]"
 user_company:
   type: str
-  default: ""
+  default: "I'm a freelancer"
   when: "[[ standalone_role ]]"
 galaxy_tags:
   type: str
