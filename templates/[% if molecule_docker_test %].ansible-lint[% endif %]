@@ -1,0 +1,9 @@
+---
+# Offline mode disables installation of requirements.yml
+offline: true
+
+skip_list:
+  - comments
+  - fqcn-builtins
+  - unnamed-task
+  - no-changed-when

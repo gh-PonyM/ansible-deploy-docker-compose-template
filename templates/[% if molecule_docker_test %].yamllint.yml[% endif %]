@@ -1,0 +1,10 @@
+---
+ignore:
+  - .venv/
+
+rules:
+  comments:
+    level: warning
+  comments-indentation:
+    level: warning
+  line-length: disable

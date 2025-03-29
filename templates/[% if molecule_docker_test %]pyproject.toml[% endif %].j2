@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "ansible-molecule"
+version = "0.1.0"
+description = "Deps for test container"
+authors = ["[[ github_user ]] <[[ user_email ]]>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+ansible = "^9.4.0"
+molecule = "^24.2.0"
+molecule-plugins = {extras = ["docker"], version = "^23.5.3"}
+yamllint = "^1.32.0"
+docker = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
