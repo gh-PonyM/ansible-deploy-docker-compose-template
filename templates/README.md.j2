@@ -1,15 +1,11 @@
 # Role [[ cli_output['role_name'] ]]
 
-This role was generated be role *deploy-docker-compose-template** copier template.
+[[ project_description ]]
 
 ## docker-compose.yml template
 
-The original [docker-compose.yml]([[ compose_file_path ]]) was transformed into an ansible template:
+The original [docker-compose.yml]([[ compose_file_path ]]) was transformed into an [ansible template](templates/docker-compose.yml)
 
-```yaml
----
-[[ cli_output['final_compose'] | to_nice_yaml(sort_keys=False, indent=2) ]]
-```
 ## Defaults
 
 Extracted from the original `docker-compose.yml` including environment configurations, the generated defaults are:

@@ -11,7 +11,10 @@ To bootstrap the template, `copier` tools is used alongside custom jinja extensi
 
 Usage:
 
-    copier gh:gh-PonyM/deploy-docker-compose-template --trust <target_dir>
+    mkdir my_role && touch my_role/docker-compose.yml
+    # Add your desired compose config
+
+    copier gl:lksch-group/deploy-docker-compose-template --trust my_role
 
 ## Notes on generated ansible role
 

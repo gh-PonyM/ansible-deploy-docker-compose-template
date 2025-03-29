@@ -10,19 +10,27 @@ _envops:
   variable_end_string: ']]'
   trim_blocks: true
 #  keep_trailing_newline: true
-
+standalone_role:
+  type: bool
+  default: true
+  help: Whether to create a standalone role that can be installed via ansible-galaxy
+project_description:
+  type: str
+  default: "Generated ansible role docker using docker compose for [[ project_name ]]"
+  help: A short project description for the README.md
 github_user:
   type: str
   default: john
+  help: The github user name to use for the galaxy role
+  when: "[[ standalone_role ]]"
 user_name:
   type: str
   default: John Doe
+  when: "[[ standalone_role ]]"
 user_email:
   type: str
   default: john@doe.com
-user_company:
-  type: str
-  default: ""
+  when: "[[ standalone_role ]]"
 license:
   type: str
   choices:
@@ -33,99 +41,89 @@ license:
   - GNU General Public License v3
   - GNU Lesser General Public License v3
   default: MIT license
-
+  when: "[[ standalone_role ]]"
 galaxy_role_namespace:
   type: str
   default: "[[ github_user ]]"
+  when: "[[ standalone_role ]]"
 galaxy_author:
   type: str
   default: "[[ user_name ]]"
+  when: "[[ standalone_role ]]"
+user_company:
+  type: str
+  default: ""
+  when: "[[ standalone_role ]]"
 galaxy_tags:
   type: str
   multiselect: true
   default: ["docker-compose", "docker"]
+  when: "[[ standalone_role ]]"
 min_ansible_version:
   type: str
   default: 2.10
-
+  when: "[[ standalone_role ]]"
+compose_file_path:
+  type: str
+  default: docker-compose.yml
+  help: Path to the compose file to convert. Relative paths are resolved to the output directory.
 docker_user:
   type: str
   default: dockerusr
   help: The default user name for the generated role that owns the files and is inside the docker group
-
 docker_user_id:
   type: int
   default: 1002
   help: The user id of the docker_user to make sure it is the same on all servers
-
-# currently only one compose file at a time is supported
-compose_file_path:
-  type: str
-  default: docker-compose.yml
-  help: Path to the compose file to convert
-
 project_name:
   type: str
   default: "[[ compose_file_path | dirname | basename ]]"
   help: |
-    project name, defaults to the parent folder name where the compose file was found.
-
+    Project name, e.g. the your git folder parent directory. Used to name compose parent folder on the remote server
 role_name:
   type: str
   default: "docker_[[ project_name ]]"
   validator: '[% if not (role_name | regex_search(''^[a-z][_a-zA-Z]+$'')) %]role_name
     is limited to lowercase word characters (i.e., a-z, 0-9) and ‘_’.[% endif %]'
   help: The name of the role to be created
-
-project_description:
-  type: str
-  default: "Generated ansible role docker using docker compose for [[ project_name ]]"
-
-# prefix used for each environment config variable when transformed to a
-# role default, defaults to the project_name
 ansible_defaults_prefix:
   type: str
   default: "[[ project_name | regex_replace('-', '_') ]]_"
   help: Prefix to use for this roles defaults to scope the variables. Also include _ inside the prefix
-
 proxy_container_net_attach:
   default: ""
   type: str
-  help: Optional ocker compose service name inside the compose file that should be attached to a reverse proxy container network. Leave empty if this is not needed.
-
+  help: Optional name of one service, to attach it to an external network e.g. for a revers proxy.
 ext_proxy_net:
   type: str
   default: proxy-tier
   help: Name of the external proxy net network
-
+  when: "[[ proxy_container_net_attach != '' ]]"
 min_secret_length:
   type: int
   default: 17
   help: Minimum length for secrets to be created by the secret provider
-
 secret_provider:
   type: str
   default: passwordstore
   choices: ["passwordstore"]
   help: "The secret provider that is transformed to a lookup expression for example playbooks"
-
 secret_string_template:
     type: str
     default: "services/{role_name}/{service_name}/{env_key}"
-    help: String that is formatted using .format.
-
+    help: String that used for path to ansible lookup expression
+    when: "[[ secret_provider == 'passwordstore' ]]"
 remove_cli_artefact:
   type: bool
   default: true
   help: Whether to remove the cli json output used for project generation can be checked into git if desired
-
+molecule_docker_test:
+  type: bool
+  default: true
+  help: Add molecule test files using docker provider
 molecule_distros:
   type: str
   choices: ["ubuntu2204", "ubuntu2004", "ubuntu2404", "debian11", "debian12"]
   default: ["ubuntu2204", "debian12"]
   multiselect: true
-
-molecule_docker_test:
-  type: bool
-  default: true
-  help: Add molecule test files using docker provider
+  when: "[[ molecule_docker_test ]]"
