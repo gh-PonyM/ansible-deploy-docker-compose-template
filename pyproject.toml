@@ -9,15 +9,10 @@ packages = [{include = "scripts"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pydantic = "^2.6.4"
-click = "^8.1.7"
-pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.1"
 datamodel-code-generator = {extras = ["http"], version = "^0.25.5"}
-ansible = "^9.4.0"
-poetry-plugin-export = "^1.9.0"
 copier = "^9.6.0"
 pytest-copie = "^0.2.1"
 copier-templates-extensions = "^0.3.1"
@@ -29,3 +24,6 @@ dc-to-ansible = "scripts.dc_to_ansible:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+include = ["extensions", "tests"]

@@ -1,9 +1,8 @@
-import json
 import shutil
 
 import pytest
 
-from scripts.dc_to_ansible import main
+from extensions.dc_to_ansible import run
 
 
 def find_in(items, key: str, value):
@@ -16,48 +15,21 @@ def find_in(items, key: str, value):
     not shutil.which("docker"), reason="Docker is not installed. but the cli calls it"
 )
 @pytest.mark.parametrize("file_name", ("wikijs.yml",))
-def test_cli_smoke_test(runner, fixture_path, file_name):
+def test_wikijs(fixture_path, file_name):
     file = fixture_path / file_name
     def_prefix = "xx_"
     role_name = file_name.split(".")[0]
-    r = runner.invoke(
-        main,
-        [
-            "--file",
-            str(file.resolve()),
-            "--defaults-prefix",
-            def_prefix,
-            "--role-name",
-            role_name,
-        ],
-    )
-    assert r.exit_code == 0
-    print(r.stdout)
+    run(file=file, defaults_prefix=def_prefix, role_name=role_name)
 
 
 @pytest.mark.skipif(
     not shutil.which("docker"), reason="Docker is not installed. but the cli calls it"
 )
-def test_doco_pihole(runner, fixture_path):
+def test_doco_pihole(fixture_path):
     file = fixture_path / "pihole.yml"
     def_prefix = "phh_"
     role_name = "pihole"
-    r = runner.invoke(
-        main,
-        [
-            "--file",
-            str(file.resolve()),
-            "--defaults-prefix",
-            def_prefix,
-            "--role-name",
-            role_name,
-        ],
-    )
-    assert r.exit_code == 0
-    json_raw = r.stdout
-    print(r.stdout)
-    data = json.loads(json_raw)
-    # print(json_raw)
+    data = run(file=file, defaults_prefix=def_prefix, role_name=role_name).model_dump()
 
     # test defaults
     defaults = data["defaults"]
@@ -92,9 +64,9 @@ def test_doco_pihole(runner, fixture_path):
 
     # test networks
     assert data["proxy_container"] is None
-    assert not svc.get(
-        "networks"
-    ), "original compose does not list networks and no proxy_container was given to the cli"
+    assert not svc.get("networks"), (
+        "original compose does not list networks and no proxy_container was given to the cli"
+    )
 
     # test volumes
     assert data["volume_defaults"]["./etc-pihole"] == f"{def_prefix}pihole_mount_dir"
@@ -109,30 +81,18 @@ def test_doco_pihole(runner, fixture_path):
     assert find_in(defaults, "key", f"{def_prefix}host_port_pihole_53")
 
 
-def test_env_from_file_from_env_key(fixture_path, runner):
+def test_env_from_file_from_env_key(fixture_path):
     file = fixture_path / "minio.yml"
     def_prefix = "minio_"
     role_name = "minio"
-    uid = "999"
-    r = runner.invoke(
-        main,
-        [
-            "--file",
-            str(file.resolve()),
-            "--defaults-prefix",
-            def_prefix,
-            "--role-name",
-            role_name,
-            "--proxy-container",
-            "minio",
-            "--uid",
-            uid
-        ],
-    )
-    print(r.stdout)
-    assert r.exit_code == 0
-    json_raw = r.stdout
-    data = json.loads(json_raw)
+    uid = 999
+    data = run(
+        file=file,
+        defaults_prefix=def_prefix,
+        role_name=role_name,
+        uid=uid,
+        proxy_container="minio",
+    ).model_dump()
     # test defaults
     defaults_ = data["defaults"]
     vol = find_in(defaults_, "original_key", "MINIO_VOLUMES")
@@ -140,29 +100,18 @@ def test_env_from_file_from_env_key(fixture_path, runner):
     assert data["final_compose"]["services"]["minio"]["user"] == f"{uid}:{uid}"
 
 
-def test_env_from_file(fixture_path, runner):
+def test_env_from_file(fixture_path):
     file = fixture_path / "wg-easy.yml"
     def_prefix = "wg_"
     role_name = "wireguard"
-    uid = "999"
-    r = runner.invoke(
-        main,
-        [
-            "--file",
-            str(file.resolve()),
-            "--defaults-prefix",
-            def_prefix,
-            "--role-name",
-            role_name,
-            "--proxy-container",
-            "wg",
-            "--uid",
-            uid
-        ],
-    )
-    assert r.exit_code == 0
-    json_raw = r.stdout
-    data = json.loads(json_raw)
+    uid = 999
+    data = run(
+        file=file,
+        defaults_prefix=def_prefix,
+        role_name=role_name,
+        uid=uid,
+        proxy_container="wg",
+    ).model_dump()
     # test defaults
     defaults_ = data["defaults"]
     vol = find_in(defaults_, "original_key", "PASSWORD_HASH")
@@ -170,5 +119,6 @@ def test_env_from_file(fixture_path, runner):
 
     wg_service = data["final_compose"]["services"]["wg"]
     assert wg_service["env_file"], "cli should not remove the env_file key"
-    assert not wg_service["environment"].get("PASSWORD_HASH"), \
+    assert not wg_service["environment"].get("PASSWORD_HASH"), (
         "defaults should have been removed and not taken from docker compose config"
+    )

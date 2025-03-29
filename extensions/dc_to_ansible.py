@@ -737,8 +737,6 @@ def run(
     out: Path | None = None,
 ) -> OutputModel | None:
     """Converts a docker-compose file into an ansible role"""
-    if not uid:
-        uid = int(getenv("UID"))
 
     if not defaults_prefix.endswith("_"):
         defaults_prefix = f"{defaults_prefix}_"

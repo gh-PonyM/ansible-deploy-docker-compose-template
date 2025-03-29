@@ -4,7 +4,10 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize("compose", ("wg-easy.yml", "nginx-proxy-acme.yml", "minio.yml", "wikijs.yml", "pihole.yml"))
+@pytest.mark.parametrize(
+    "compose",
+    ("wg-easy.yml", "nginx-proxy-acme.yml", "minio.yml", "wikijs.yml", "pihole.yml"),
+)
 def test_create_role(compose, fixture_path, output_dir, copie):
     name = compose.replace(".yml", "")
     compose_p = fixture_path / compose
@@ -16,8 +19,7 @@ def test_create_role(compose, fixture_path, output_dir, copie):
     ctx = {
         "project_name": name,
         "compose_file_path": str(compose_p.resolve()),
-        "remove_cli_artefact": False
+        "remove_cli_artefact": False,
     }
     result = copie.copy(template_dir=Path("."), extra_answers=ctx)
     assert not result.exception
-    assert False
