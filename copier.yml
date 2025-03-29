@@ -10,6 +10,9 @@ _envops:
   variable_end_string: ']]'
   trim_blocks: true
 #  keep_trailing_newline: true
+_skip_if_exists:
+  - molecule/default/vars.yml
+  - molecule/default/converge.yml
 standalone_role:
   type: bool
   default: true
