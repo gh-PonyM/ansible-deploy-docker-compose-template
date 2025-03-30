@@ -1085,6 +1085,7 @@ class ContextUpdater(ContextHook):
             secret_string_template=answers["secret_string_template"],
             min_secret_length=answers["min_secret_length"],
             ext_proxy_net=answers.get("ext_proxy_net", context["ext_proxy_net"]),
+            proxy_container=answers.get("proxy_container_net_attach"),
         )
         context["cli_output"] = cli_data_model.model_dump(
             mode="json", exclude_defaults=False
