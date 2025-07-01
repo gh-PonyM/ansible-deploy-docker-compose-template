@@ -2,6 +2,21 @@
 
 [[ project_description ]]
 
+[% if standalone_role %]
+## Installation
+
+Install the role using `ansible-galaxy` using a `requirements.yml` file:
+
+```yaml
+
+roles:
+- src: https://github.com/[[ github_user ]]/[[ role_name ]].git
+  version: main
+  name: [[ role_name ]]
+  scm: git
+```
+[% endif %]
+
 ## docker-compose.yml template
 
 The original [docker-compose.yml]([[ compose_file_path ]]) was transformed into an [ansible template](templates/docker-compose.yml)

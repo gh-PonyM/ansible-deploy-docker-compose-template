@@ -98,7 +98,7 @@ ansible_defaults_prefix:
 proxy_container_net_attach:
   default: ""
   type: str
-  help: Optional name of one service, to attach it to an external network e.g. for a revers proxy.
+  help: Optional name of one service, to attach it to an external network e.g. for a reverse proxy.
 ext_proxy_net:
   type: str
   default: proxy-tier
