@@ -103,7 +103,7 @@ github_repo_name:
 git_remote_url:
   type: str
   when: false
-  default: '[[ git_host ]]:[[ github_user ]]/[[ github_repo_name ]].git'
+  default: 'git@[[ git_host ]]:[[ github_user ]]/[[ github_repo_name ]].git'
 git_https_url:
   type: str
   when: false
