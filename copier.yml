@@ -161,7 +161,10 @@ _tasks:
       fi
     when: "[[ init_git and _copier_operation == 'copy' ]]"
   - command: |
-      if [ ! -d .git ]; then
+      if `git remote | grep -q origin`; then
+          echo "Remote origin already exists, skipping adding remote"
+      else
+          echo "Adding remote origin [[ git_remote_url ]]"
           git remote add origin [[ git_remote_url ]]
       fi
     when: "[[ init_git and _copier_operation == 'copy' ]]"
