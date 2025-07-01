@@ -26,6 +26,10 @@ github_user:
   default: john
   help: The github user name to use for the galaxy role
   when: "[[ standalone_role ]]"
+git_host:
+  type: str
+  default: github.com
+  when: "[[ standalone_role ]]"
 user_name:
   type: str
   default: John Doe
@@ -96,6 +100,14 @@ github_repo_name:
   default: "[[ role_name | regex_replace('_', '-') ]]"
   help: Repo name to use for the standalone role. Should be used for as name for the Github Repo.
   when: "[[ standalone_role ]]"
+git_remote_url:
+  type: str
+  when: false
+  default: '[[ git_host ]]:[[ github_user ]]/[[ github_repo_name ]].git'
+git_https_url:
+  type: str
+  when: false
+  default: 'https://[[ git_host ]]/[[ github_user ]]/[[ role_name ]].git'
 ansible_defaults_prefix:
   type: str
   default: "[[ project_name | regex_replace('-', '_') ]]_"
@@ -137,3 +149,19 @@ molecule_distros:
   default: ["ubuntu2204", "debian12"]
   multiselect: true
   when: "[[ molecule_docker_test ]]"
+init_git:
+  type: bool
+  default: false
+  help: Initialize git repo if not existing.
+  when: "[[ standalone_role ]]"
+_tasks:
+  - command: |
+      if [ ! -d .git ] then
+        git init --initial-branch=main
+      fi
+    when: "[[ init_git and _copier_operation == 'copy' ]]"
+  - command: |
+      if [ ! -d .git ] then
+          git remote add origin [[ git_remote_url ]]
+      fi
+    when: "[[ init_git and _copier_operation == 'copy' ]]"
