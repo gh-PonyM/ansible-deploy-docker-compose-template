@@ -84,13 +84,18 @@ project_name:
   type: str
   default: "[[ compose_file_path | dirname | basename ]]"
   help: |
-    Project name, e.g. the your git folder parent directory. Used to name compose parent folder on the remote server
+    Project name. Used to name compose parent folder on the remote server
 role_name:
   type: str
   default: "docker_[[ project_name ]]"
   validator: '[% if not (role_name | regex_search(''^[a-z][_a-zA-Z]+$'')) %]role_name
     is limited to lowercase word characters (i.e., a-z, 0-9) and ‘_’.[% endif %]'
   help: The name of the role to be created
+github_repo_name:
+  type: str
+  default: "[[ role_name | regex_replace('_', '-') ]]"
+  help: Repo name to use for the standalone role. Should be used for as name for the Github Repo.
+  when: "[[ standalone_role ]]"
 ansible_defaults_prefix:
   type: str
   default: "[[ project_name | regex_replace('-', '_') ]]_"

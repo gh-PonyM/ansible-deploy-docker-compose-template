@@ -7,7 +7,7 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: "instance-${MOLECULE_DISTRO:-ubuntu2204}-[[ project_name ]]"
+  - name: "instance-${MOLECULE_DISTRO:-ubuntu2204}-[[ role_name ]]"
     image: "geerlingguy/docker-${MOLECULE_DISTRO:-[[ molecule_distros[0] ]]}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
